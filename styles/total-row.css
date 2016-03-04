@@ -1,0 +1,21 @@
+.container {
+  display: flex;
+  font-size: 0.667em;
+  margin: 0.667em 0 0;
+}
+.header {
+  position: relative;
+  right: 1em;
+  flex: 2 0 0;
+  text-align: right;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+.total {
+  flex: 1 0 0;
+  font-weight: 700;
+}
+.unloaded {
+  opacity: 0;
+}

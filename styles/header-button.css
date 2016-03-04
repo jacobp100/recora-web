@@ -1,0 +1,52 @@
+.container {
+  display: inline-block;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: 0;
+  margin: 0;
+  text-decoration: none;
+}
+
+.stackContainer {
+  padding: 0.2em 0;
+}
+
+.stackIcon {
+  position: relative;
+  top: 0.03em;
+  display: block;
+  font-size: 1.8em;
+  margin: 0 0.25em;
+}
+
+.stackLabel {
+  position: relative;
+  top: -0.1em;
+  display: block;
+  font-size: 0.6em;
+  font-weight: 300;
+  text-align: center;
+}
+
+.horizontalContainer {
+  padding: 0.45em 0 0.35em;
+}
+
+.horizontalIcon {
+  display: inline-block;
+  padding: 0.1em 0;
+  margin-right: 0.333em;
+  width: 1em;
+  height: 1em;
+  font-size: 2em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.horizontalLabel {
+  font-size: 1em;
+  font-weight: 300;
+  line-height: 2;
+  vertical-align: middle;
+}

@@ -1,0 +1,19 @@
+.container {
+  font-family: 'Open Sans', 'sans-serif';
+  line-height: 1.5;
+  background: #fff;
+  max-width: 50em;
+  min-height: 30em;
+  padding: 7.594em;
+  border-radius: 1px;
+  margin: 7em auto 1.5em;
+}
+
+.title {
+  font-size: 3.375em;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0.667em 0 2.25em;
+  color: #333;
+}

@@ -1,0 +1,32 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  background: #222;
+  color: #fff;
+  z-index: 1;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.section {
+  display: flex;
+  white-space: nowrap;
+  min-width: auto; /* (some browsers only) set minimim size to content size */
+}
+
+.left {
+  flex: 1 0 0;
+  padding-left: 0.5em;
+}
+
+.right {
+  flex: 1 0 0;
+  justify-content: flex-end;
+  padding-right: 0.5em;
+}
+
+.center {
+  flex: 0 0 auto;
+}

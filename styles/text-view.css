@@ -1,0 +1,39 @@
+.container {
+  position: relative;
+  min-height: 1.5em;
+}
+.entry {
+  counter-increment: entries;
+  display: flex;
+  min-height: 1.5em;
+  margin: 0;
+}
+.input {
+  flex: 2 0 0;
+  font-weight: 200;
+  white-space: pre-wrap;
+}
+.result {
+  flex: 1 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.textarea {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 66.667%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-family: 'Open Sans Blank';
+  line-height: inherit;
+  background: transparent;
+  resize: none;
+}
+.textarea:focus {
+  outline: 0;
+}

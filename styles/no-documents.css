@@ -1,0 +1,22 @@
+.title {
+  text-align: center;
+  font-weight: 200;
+  font-size: 3.375em;
+  margin: 1em 0;
+}
+
+.body {
+  text-align: center;
+  font-weight: 100;
+  font-size: 1.5em;
+}
+
+.button {
+  background: transparent;
+  font: inherit;
+  font-weight: 300;
+  color: inherit;
+  padding: 0 0.666em;
+  border: 0;
+  margin: 0;
+}

@@ -1,0 +1,10 @@
+.TAG_NUMBER { color: #8D43B2; }
+.TAG_UNIT { color: #90B021; }
+.TAG_OPERATOR { color: #3399DB; }
+.TAG_COLOR { color: #D45BA0; }
+.TAG_DATETIME { color: #E67F22; }
+.TAG_TIMEZONE { color: #E67F22; }
+.TAG_FUNCTION { color: #FFA800; }
+.TAG_OPEN_BRACKET, .TAG_CLOSE_BRACKET { color: #603260; }
+.TAG_SYMBOL { color: #C1392B; }
+.placeholder { color: #888; }
