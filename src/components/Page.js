@@ -13,7 +13,6 @@ export default function Page({
         map(sectionId => (
           <Section
             key={sectionId}
-            text={(sectionTextInputs[sectionId] || []).join('\n')}
             textInputs={sectionTextInputs[sectionId]}
             entries={sectionEntries[sectionId]}
             total={sectionTotalTexts[sectionId]}

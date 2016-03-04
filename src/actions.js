@@ -20,8 +20,8 @@ const nextId = (key, existingIds) => {
 
 export const setTextInputs = (documentId, sectionId, textInputs, useCache = true) =>
   (dispatch, getState) => {
-    const { sectionEntries, documentInstances } = getState();
-    const instance = documentInstances[documentId];
+    const { sectionInstances, sectionEntries } = getState();
+    const instance = sectionInstances[sectionId];
     const existingEntries = sectionEntries[sectionId] || [];
     const entryCache = useCache ? keyBy(prop('text'), existingEntries) : {};
     const entries = map(textInput => (
@@ -34,31 +34,45 @@ export const setTextInputs = (documentId, sectionId, textInputs, useCache = true
       map(entryResult, tail(entries))
     );
     const totalText = total && typeToString(context, total);
-    dispatch({ type: 'SET_TEXT_INPUTS', documentId, sectionId, textInputs });
-    dispatch({ type: 'SET_ENTRIES', documentId, sectionId, entries });
-    dispatch({ type: 'SET_TOTAL', documentId, sectionId, total });
-    dispatch({ type: 'SET_TOTAL_TEXT', documentId, sectionId, totalText });
+    dispatch({ type: 'SET_TEXT_INPUTS', sectionId, textInputs });
+    dispatch({ type: 'SET_ENTRIES', sectionId, entries });
+    dispatch({ type: 'SET_TOTAL', sectionId, total });
+    dispatch({ type: 'SET_TOTAL_TEXT', sectionId, totalText });
   };
+
+export const setSectionLocals = (documentId, sectionId, locals) => (dispatch, getState) => {
+  const { documentLocales, documentConfigs, sectionTextInputs } = getState();
+  const locale = documentLocales[documentId];
+  const config = documentConfigs[documentId];
+
+  const instance = new Recora(locale, {
+    ...config,
+    constants: locals || {},
+  });
+
+  dispatch({ type: 'SET_LOCALS', sectionId, locals });
+  dispatch({ type: 'SET_INSTANCE', sectionId, instance });
+  // Force recalculate section
+  const textInputs = sectionTextInputs[sectionId] || [];
+  dispatch(setTextInputs(documentId, sectionId, textInputs, false));
+};
 
 export const addSection = (documentId) => (dispatch, getState) => {
   const { documentSections } = getState();
   const sectionId = nextId('section-', flatten(values(documentSections)));
   dispatch({ type: 'ADD_SECTION', documentId, sectionId });
-  dispatch(setTextInputs(documentId, sectionId, []));
+  dispatch(setSectionLocals(documentId, sectionId, {})); // calls setTextInputs
 };
 
 export const setConfig = (documentId, locale, config) => (dispatch, getState) => {
-  const { documentSections, sectionTextInputs } = getState();
-  const instance = new Recora(locale, config);
+  const { documentSections, sectionLocals } = getState();
   dispatch({ type: 'SET_LOCALE', documentId, locale });
-  dispatch({ type: 'SET_CONFIG', documentId, config });
-  dispatch({ type: 'SET_INSTANCE', documentId, instance });
+  dispatch({ type: 'SET_DOCUMENT_CONFIG', documentId, config });
 
-  // Force recalculate all sections
-  const sections = documentSections[documentId];
+  const sections = documentSections[documentId] || [];
   forEach(sectionId => {
-    const textInputs = sectionTextInputs[sectionId];
-    dispatch(setTextInputs(documentId, sectionId, textInputs, false));
+    const sectionConfig = sectionLocals[sectionId] || {};
+    dispatch(setSectionLocals(documentId, sectionId, sectionConfig));
   }, sections);
 };
 
@@ -69,18 +83,16 @@ export const setTitle = (documentId, title) => (
 export const addDocument = () => (dispatch, getState) => {
   const { documents } = getState();
   const documentId = nextId('document-', documents);
-  dispatch({ type: 'ADD_DOCUMENT', documentId });
   dispatch(setTitle(documentId, 'New Document'));
-  dispatch(addSection(documentId));
   // FIXME
-  dispatch(setConfig(documentId, 'en', { currentYear: 2016, currentMonth: 1, currentDate: 1 }));
+  const config = { currentYear: 2016, currentMonth: 1, currentDate: 1 };
+  dispatch(setConfig(documentId, 'en', config));
+  dispatch(addSection(documentId));
+  dispatch({ type: 'ADD_DOCUMENT', documentId });
 };
 
 export const loadDocument = (documentId) => (dispatch, getState) => {
-  const { documentLocales, documentConfigs, documentInstances } = getState();
-  if (documentInstances[documentId]) {
-    return;
-  }
+  const { documentLocales, documentConfigs } = getState();
   const locale = documentLocales[documentId];
   const config = documentConfigs[documentId];
   // Calls into setTextInputs, causing entire the document to be calculated

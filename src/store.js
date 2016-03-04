@@ -6,9 +6,10 @@ const defaultState = {
   documentLocales: {},
   documentConfigs: {},
   documentTitles: {},
-  documentInstances: {}, // Recora instances
   // Object of document id to array section ids (which in turn link section__ entries)
   documentSections: {},
+  sectionLocals: {},
+  sectionInstances: {}, // Recora instances
   sectionTextInputs: {},
   sectionEntries: {}, // Recora outputs
   sectionTotals: {}, // Recora outputs
@@ -21,6 +22,7 @@ const localStorageKeys = [
   'documentConfigs',
   'documentTitles',
   'documentSections',
+  'sectionLocals',
   'sectionTextInputs',
   // Note that we save total texts this so totals are displayed whilst the page is loading
   // to avoid reflowing content afterwards
@@ -64,12 +66,14 @@ function reducer(action, state) {
       return assocPath(['documentConfigs', documentId], action.config, state);
     case 'SET_TITLE':
       return assocPath(['documentTitles', documentId], action.title, state);
-    case 'SET_INSTANCE':
-      return assocPath(['documentInstances', documentId], action.instance, state);
     case 'ADD_SECTION':
       const sectionPath = ['documentSections', documentId];
       const existingSections = pathOr([], sectionPath, state);
       return assocPath(sectionPath, append(sectionId, existingSections), state);
+    case 'SET_LOCALS':
+      return assocPath(['sectionLocals', sectionId], action.locals, state);
+    case 'SET_INSTANCE':
+      return assocPath(['sectionInstances', sectionId], action.instance, state);
     case 'SET_TEXT_INPUTS':
       return assocPath(['sectionTextInputs', sectionId], action.textInputs, state);
     case 'SET_ENTRIES':
