@@ -1,5 +1,6 @@
 import {
   map, reduce, head, tail, contains, flatten, values, forEach, groupBy, prop, pipe, fromPairs,
+  reject, flip, concat,
 } from 'ramda';
 import Recora from 'recora';
 import { ADD as add } from 'recora/src/math';
@@ -60,11 +61,24 @@ export const setSectionLocals = (documentId, sectionId, locals) => (dispatch, ge
   dispatch(setTextInputs(documentId, sectionId, textInputs, false));
 };
 
+export const setSectionTitle = (sectionId, title) => (
+  { type: 'SET_SECTION_TITLE', sectionId, title }
+);
+
 export const addSection = (documentId) => (dispatch, getState) => {
   const { documentSections } = getState();
   const sectionId = nextId('section-', flatten(values(documentSections)));
   dispatch({ type: 'ADD_SECTION', documentId, sectionId });
+  dispatch(setSectionTitle(sectionId, ''));
   dispatch(setSectionLocals(documentId, sectionId, {})); // calls setTextInputs
+};
+
+export const reorderSections = (documentId, orderedSectionIds) => (dispatch, getState) => {
+  const { documentSections } = getState();
+  const existingSections = documentSections[documentId];
+  const sectionIdsNotIncluded = reject(flip(contains)(orderedSectionIds), existingSections);
+  const sectionIds = concat(orderedSectionIds, sectionIdsNotIncluded);
+  dispatch({ type: 'SET_SECTIONS', documentId, sectionIds });
 };
 
 export const setConfig = (documentId, locale, config) => (dispatch, getState) => {
@@ -79,8 +93,8 @@ export const setConfig = (documentId, locale, config) => (dispatch, getState) =>
   }, sections);
 };
 
-export const setTitle = (documentId, title) => (
-  { type: 'SET_TITLE', documentId, title }
+export const setDocumentTitle = (documentId, title) => (
+  { type: 'SET_DOCUMENT_TITLE', documentId, title }
 );
 
 export const deleteDocument = (documentId) => (dispatch, getState) => {
@@ -95,7 +109,7 @@ export const deleteDocument = (documentId) => (dispatch, getState) => {
 export const addDocument = () => (dispatch, getState) => {
   const { documents } = getState();
   const documentId = nextId('document-', documents);
-  dispatch(setTitle(documentId, 'New Document'));
+  dispatch(setDocumentTitle(documentId, 'New Document'));
   const now = new Date();
   const config = {
     unitPairs: [],

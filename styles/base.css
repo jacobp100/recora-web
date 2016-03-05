@@ -19,6 +19,10 @@
   letter-spacing: 0.06em;
   transition: all 0.08s ease-out;
 }
+.buttonBlock {
+  display: block;
+  width: 100%;
+}
 .button:hover, .button:focus {
   background: #333;
   border-color: #000;

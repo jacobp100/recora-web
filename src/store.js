@@ -1,6 +1,6 @@
 import {
   pathOr, dissoc, assoc, assocPath, append, forEach, reduce, evolve, over, lensProp, curry,
-  unless, isNil, reject, equals
+  unless, isNil, reject, equals,
 } from 'ramda';
 
 const defaultState = {
@@ -13,6 +13,7 @@ const defaultState = {
   documentSections: {},
   sectionLocals: {},
   sectionInstances: {}, // Recora instances
+  sectionTitles: {},
   sectionTextInputs: {},
   sectionEntries: {}, // Recora outputs
   sectionTotals: {}, // Recora outputs
@@ -26,6 +27,7 @@ const localStorageKeys = [
   'documentTitles',
   'documentSections',
   'sectionLocals',
+  'sectionTitles',
   'sectionTextInputs',
   // Note that we save total texts this so totals are displayed whilst the page is loading
   // to avoid reflowing content afterwards
@@ -70,7 +72,7 @@ function reducer(action, state) {
       return assocPath(['documentLocales', documentId], action.locale, state);
     case 'SET_CONFIG':
       return assocPath(['documentConfigs', documentId], action.config, state);
-    case 'SET_TITLE':
+    case 'SET_DOCUMENT_TITLE':
       return assocPath(['documentTitles', documentId], action.title, state);
     case 'ADD_SECTION':
       const sectionPath = ['documentSections', documentId];
@@ -80,6 +82,8 @@ function reducer(action, state) {
       return assocPath(['sectionLocals', sectionId], action.locals, state);
     case 'SET_INSTANCE':
       return assocPath(['sectionInstances', sectionId], action.instance, state);
+    case 'SET_SECTION_TITLE':
+      return assocPath(['sectionTitles', sectionId], action.title, state);
     case 'SET_TEXT_INPUTS':
       return assocPath(['sectionTextInputs', sectionId], action.textInputs, state);
     case 'SET_ENTRIES':
@@ -88,6 +92,8 @@ function reducer(action, state) {
       return assocPath(['sectionTotals', sectionId], action.total, state);
     case 'SET_TOTAL_TEXT':
       return assocPath(['sectionTotalTexts', sectionId], action.totalText, state);
+    case 'SET_SECTIONS':
+      return assocPath(['documentSections', documentId], action.sectionIds, state);
     case 'DELETE_DOCUMENT':
       const dropDocumentId = dissoc(documentId);
       return evolve({

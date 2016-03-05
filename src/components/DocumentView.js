@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { identity, equals, always, cond, contains } from 'ramda';
+import { identity, equals, always, cond, contains, prop } from 'ramda';
 import { connect } from 'react-redux';
 import { TweenState } from 'state-transitions';
 import Page from './page';
@@ -7,10 +7,14 @@ import { Header, HeaderSection } from './Header';
 import { StackButton, HorizontalLink } from './HeaderButton';
 import SettingsPopup from './SettingsPopup';
 import UnitsPopup from './UnitsPopup';
-import { setTextInputs, deleteDocument } from '../actions';
+import SectionsPopover from './SectionsPopover';
+import {
+  setTextInputs, addSection, setSectionTitle, reorderSections, deleteDocument,
+} from '../actions';
 
 const UNITS = 'units';
 const SETTINGS = 'settings';
+const SECTIONS = 'sections';
 
 class DocumentView extends React.Component {
   constructor() {
@@ -18,15 +22,39 @@ class DocumentView extends React.Component {
 
     this.state = {
       popup: null,
+      popover: null,
     };
 
     this.getId = () => this.props.params.id;
+
     this.setTextInputs = (sectionId) => (e) => this.props.dispatch(setTextInputs(
       this.getId(), sectionId, e.target.value.split('\n')));
+    this.addSection = () => this.props.dispatch(addSection(this.getId()));
+    this.setSectionTitle = (sectionId, title) => this.props.dispatch(
+      setSectionTitle(sectionId, title));
+    this.reorderSections = (order) => this.props.dispatch(reorderSections(this.getId(), order));
     this.deleteDocument = () => this.props.dispatch(deleteDocument(this.getId()));
-    this.closePopup = () => this.setState({ popup: null });
+
+    this.setPopover = (type, e) => {
+      const { popover } = this.state;
+      if (popover && popover.type === type) {
+        this.setState({ popover: null });
+      } else {
+        const { bottom, left, width } = e.currentTarget.getBoundingClientRect();
+        this.setState({
+          popover: {
+            type,
+            top: bottom,
+            left: left + width / 2,
+          },
+        });
+      }
+    };
+    this.toggleSections = (e) => this.setPopover(SECTIONS, e);
     this.toggleUnitsPopup = () => this.setState({ popup: UNITS });
     this.toggleSettingsPopup = () => this.setState({ popup: SETTINGS });
+    this.closePopover = () => this.setState({ popover: null });
+    this.closePopup = () => this.setState({ popup: null });
   }
 
   componentWillMount() {
@@ -43,8 +71,8 @@ class DocumentView extends React.Component {
 
   render() {
     const {
-      params, documents, documentTitles, documentSections, documentConfigs, sectionTextInputs,
-      sectionEntries, sectionTotalTexts,
+      params, documents, documentTitles, documentSections, documentConfigs, sectionTitles,
+      sectionTextInputs, sectionEntries, sectionTotalTexts,
     } = this.props;
     const { id } = params;
 
@@ -56,17 +84,33 @@ class DocumentView extends React.Component {
       return <div />;
     }
 
-    const { popup } = this.state;
+    const { popup, popover } = this.state;
 
     const popupElement = cond([
-      [equals(SETTINGS), always(
+      [equals(SETTINGS), () => (
         <SettingsPopup onClose={this.closePopup} onDeleteDocument={this.deleteDocument} />
       )],
-      [equals(UNITS), always(
+      [equals(UNITS), () => (
         <UnitsPopup config={config} onClose={this.closePopup} />
       )],
       [always(true), always(null)],
     ])(popup);
+
+    const popoverElement = cond([
+      [equals(SECTIONS), () => (
+        <SectionsPopover
+          top={popover.top}
+          left={popover.left}
+          sections={sections}
+          sectionTitles={sectionTitles}
+          onAddSection={this.addSection}
+          onRenameSection={this.setSectionTitle}
+          onReorderSections={this.reorderSections}
+          onClose={this.closePopover}
+        />
+      )],
+      [always(true), always(null)],
+    ])(prop('type', popover || {}));
 
     return (
       <div>
@@ -75,7 +119,7 @@ class DocumentView extends React.Component {
             <HorizontalLink icon="angle-left" text="Documents" to="/" />
           </HeaderSection>
           <HeaderSection place="center">
-            <StackButton icon="notebook" text="Sections" />
+            <StackButton icon="notebook" text="Sections" onClick={this.toggleSections} />
           </HeaderSection>
           <HeaderSection place="right">
             <StackButton icon="share" text="Share" />
@@ -88,6 +132,7 @@ class DocumentView extends React.Component {
           <Page
             title={title}
             sections={sections}
+            sectionTitles={sectionTitles}
             sectionTextInputs={sectionTextInputs}
             sectionEntries={sectionEntries}
             sectionTotalTexts={sectionTotalTexts}
@@ -95,6 +140,7 @@ class DocumentView extends React.Component {
           />
         </TweenState>
         { popupElement }
+        { popoverElement }
       </div>
     );
   }

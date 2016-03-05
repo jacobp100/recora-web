@@ -4,7 +4,13 @@ import Section from './Section';
 import * as page from '../../styles/page.css';
 
 export default function Page({
-  title, sections, sectionTextInputs, sectionEntries, sectionTotalTexts, setTextInputs,
+  title,
+  sections,
+  sectionTitles,
+  sectionTextInputs,
+  sectionEntries,
+  sectionTotalTexts,
+  setTextInputs,
 }) {
   return (
     <div className={page.container}>
@@ -13,6 +19,7 @@ export default function Page({
         map(sectionId => (
           <Section
             key={sectionId}
+            title={sectionTitles[sectionId]}
             textInputs={sectionTextInputs[sectionId]}
             entries={sectionEntries[sectionId]}
             total={sectionTotalTexts[sectionId]}

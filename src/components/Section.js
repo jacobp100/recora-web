@@ -3,14 +3,18 @@ import TextView from './TextView';
 import TotalRow from './TotalRow';
 import * as section from '../../styles/section.css';
 
-export default function Section({ textInputs, entries, total, onChange }) {
+export default function Section({ title, textInputs, entries, total, onChange }) {
   const totalElement = total && <TotalRow ready={Boolean(entries)} total={total} />;
+
+  const titleElement = title && (
+    <h2 className={section.title}>
+      { title }
+    </h2>
+  );
 
   return (
     <div>
-      <h2 className={section.title}>
-        Title
-      </h2>
+      { titleElement }
       <TextView textInputs={textInputs} entries={entries} onChange={onChange} />
       { totalElement }
     </div>
