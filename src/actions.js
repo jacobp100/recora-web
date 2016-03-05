@@ -1,9 +1,11 @@
 import {
-  map, reduce, head, tail, contains, flatten, values, forEach, groupBy, prop, pipe,
+  map, reduce, head, tail, contains, flatten, values, forEach, groupBy, prop, pipe, toPairs,
+  fromPairs,
 } from 'ramda';
 import Recora from 'recora';
 import { ADD as add } from 'recora/src/math';
 import { toString as typeToString } from 'recora/src/types/types';
+import defaultSi from 'recora/src/data/environment/si';
 
 const keyBy = pipe(groupBy, map(head));
 const entryResult = entry => entry && entry.result;
@@ -46,7 +48,9 @@ export const setSectionLocals = (documentId, sectionId, locals) => (dispatch, ge
   const config = documentConfigs[documentId];
 
   const instance = new Recora(locale, {
-    ...config,
+    units: fromPairs(config.unitPairs),
+    si: config.si,
+    currentTime: config.currentTime,
     constants: locals || {},
   });
 
@@ -67,7 +71,7 @@ export const addSection = (documentId) => (dispatch, getState) => {
 export const setConfig = (documentId, locale, config) => (dispatch, getState) => {
   const { documentSections, sectionLocals } = getState();
   dispatch({ type: 'SET_LOCALE', documentId, locale });
-  dispatch({ type: 'SET_DOCUMENT_CONFIG', documentId, config });
+  dispatch({ type: 'SET_CONFIG', documentId, config });
 
   const sections = documentSections[documentId] || [];
   forEach(sectionId => {
@@ -84,8 +88,16 @@ export const addDocument = () => (dispatch, getState) => {
   const { documents } = getState();
   const documentId = nextId('document-', documents);
   dispatch(setTitle(documentId, 'New Document'));
-  // FIXME
-  const config = { currentYear: 2016, currentMonth: 1, currentDate: 1 };
+  const now = new Date();
+  const config = {
+    unitPairs: [],
+    si: defaultSi,
+    currentTime: {
+      year: now.getFullYear(),
+      month: now.getMonth(),
+      date: now.getDate(),
+    },
+  };
   dispatch(setConfig(documentId, 'en', config));
   dispatch(addSection(documentId));
   dispatch({ type: 'ADD_DOCUMENT', documentId });

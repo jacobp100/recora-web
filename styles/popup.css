@@ -1,0 +1,92 @@
+.container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: scroll;
+  background: rgba(0, 0, 0, 0.2);
+  animation: containerEnter 0.5s ease-out;
+}
+.popup {
+  width: 24em;
+  padding: 0 2.25em;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #f5f5f5;
+  background-clip: padding-box;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  box-shadow: 0 0.5em 2em 1em rgba(0, 0, 0, 0.08);
+  composes: fadeIn from './base.css';
+  animation-duration: 0.3s;
+}
+.title {
+  margin: 1em 0 1.5em;
+  font-size: 2.25em;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+.heading {
+  margin: 1.5em 0 1em;
+  font-size: 1em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.paragraph {
+  marign: 1em 0;
+}
+.horizontal {
+  display: flex;
+  align-items: baseline;
+}
+.label {
+  flex: 2;
+  padding-right: 1em;
+  text-align: right;
+}
+.dropdown {
+  flex: 3;
+  font: inherit;
+}
+
+.popupButtonGroup {
+  display: flex;
+  margin: 2.25em 0 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid #e8e8e8;
+  text-align: center;
+}
+
+.popupButton {
+  flex: 1;
+  background: transparent;
+  margin: 0;
+  padding: 0.5em;
+  border: 0;
+  border-radius: 3px;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: all 0.15s ease-out;
+}
+.popupButton:hover, .popupButton:focus {
+  background: #333;
+  color: #fff;
+}
+.popupButton:active {
+  background: #000;
+  color: #fff;
+}
+
+@keyframes containerEnter {
+  0% {
+    background: transparent;
+  }
+}
