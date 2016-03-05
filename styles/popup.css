@@ -56,7 +56,7 @@
   font: inherit;
 }
 
-.popupButtonGroup {
+.buttonGroup {
   display: flex;
   margin: 2.25em 0 1.5em;
   padding-top: 1em;
@@ -64,7 +64,7 @@
   text-align: center;
 }
 
-.popupButton {
+.button {
   flex: 1;
   background: transparent;
   margin: 0;
@@ -76,11 +76,11 @@
   letter-spacing: 0.12em;
   transition: all 0.15s ease-out;
 }
-.popupButton:hover, .popupButton:focus {
+.button:hover, .button:focus {
   background: #333;
   color: #fff;
 }
-.popupButton:active {
+.button:active {
   background: #000;
   color: #fff;
 }

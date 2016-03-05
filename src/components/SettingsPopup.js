@@ -8,7 +8,7 @@ export default class SettingsPopup extends React.Component {
     this.state = config;
   }
   render() {
-    const { onClose } = this.props;
+    const { onDeleteDocument, onClose } = this.props;
 
     return (
       <div className={popup.container}>
@@ -18,9 +18,11 @@ export default class SettingsPopup extends React.Component {
           <p>
             Permanently deletes the document, and cannot be undone.
           </p>
-          <button className={base.button}>Delete Document</button>
-          <div className={popup.popupButtonGroup}>
-            <button className={popup.popupButton} onClick={onClose}>
+          <button className={base.button} onClick={onDeleteDocument}>
+            Delete Document
+          </button>
+          <div className={popup.buttonGroup}>
+            <button className={popup.button} onClick={onClose}>
               Close
             </button>
           </div>

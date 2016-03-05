@@ -9,6 +9,7 @@ import * as base from '../../styles/base.css';
 export default function DocumentPreview({ id, title, sections, sectionTextInputs }) {
   const sectionElements = map(sectionId => (
     <span
+      key={sectionId}
       className={documentPreview.section}
       style={{ height: sectionTextInputs[sectionId].length + 1 }}
     />

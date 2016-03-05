@@ -51,11 +51,11 @@ export default class SettingsPopup extends React.Component {
             All currency rates will be updated to their current values unless overridden here.
           </p>
           <button className={base.button}>Add Currency Rate</button>
-          <div className={popup.popupButtonGroup}>
-            <button className={popup.popupButton}>
+          <div className={popup.buttonGroup}>
+            <button className={popup.button}>
               Save Changes
             </button>
-            <button className={popup.popupButton} onClick={onClose}>
+            <button className={popup.button} onClick={onClose}>
               Cancel
             </button>
           </div>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { identity, equals, always, cond } from 'ramda';
+import React, { PropTypes } from 'react';
+import { identity, equals, always, cond, contains } from 'ramda';
 import { connect } from 'react-redux';
 import { TweenState } from 'state-transitions';
 import Page from './page';
@@ -7,12 +7,12 @@ import { Header, HeaderSection } from './Header';
 import { StackButton, HorizontalLink } from './HeaderButton';
 import SettingsPopup from './SettingsPopup';
 import UnitsPopup from './UnitsPopup';
-import { setTextInputs } from '../actions';
+import { setTextInputs, deleteDocument } from '../actions';
 
 const UNITS = 'units';
 const SETTINGS = 'settings';
 
-export default connect(identity)(class DocumentView extends React.Component {
+class DocumentView extends React.Component {
   constructor() {
     super();
 
@@ -20,29 +20,47 @@ export default connect(identity)(class DocumentView extends React.Component {
       popup: null,
     };
 
+    this.getId = () => this.props.params.id;
     this.setTextInputs = (sectionId) => (e) => this.props.dispatch(setTextInputs(
-      this.props.params.id, sectionId, e.target.value.split('\n')
-    ));
+      this.getId(), sectionId, e.target.value.split('\n')));
+    this.deleteDocument = () => this.props.dispatch(deleteDocument(this.getId()));
     this.closePopup = () => this.setState({ popup: null });
     this.toggleUnitsPopup = () => this.setState({ popup: UNITS });
     this.toggleSettingsPopup = () => this.setState({ popup: SETTINGS });
   }
 
+  componentWillMount() {
+    this.componentWillReceiveProps(this.props);
+  }
+
+  componentWillReceiveProps({ params, documents }) {
+    const { id } = params;
+
+    if (!contains(id, documents)) {
+      this.context.router.push('/');
+    }
+  }
+
   render() {
     const {
-      params, documentTitles, documentSections, documentConfigs, sectionTextInputs, sectionEntries,
-      sectionTotalTexts,
+      params, documents, documentTitles, documentSections, documentConfigs, sectionTextInputs,
+      sectionEntries, sectionTotalTexts,
     } = this.props;
     const { id } = params;
+
     const title = documentTitles[id];
     const sections = documentSections[id];
     const config = documentConfigs[id];
+
+    if (!contains(id, documents)) {
+      return <div />;
+    }
 
     const { popup } = this.state;
 
     const popupElement = cond([
       [equals(SETTINGS), always(
-        <SettingsPopup onClose={this.closePopup} />
+        <SettingsPopup onClose={this.closePopup} onDeleteDocument={this.deleteDocument} />
       )],
       [equals(UNITS), always(
         <UnitsPopup config={config} onClose={this.closePopup} />
@@ -80,4 +98,9 @@ export default connect(identity)(class DocumentView extends React.Component {
       </div>
     );
   }
-});
+}
+DocumentView.contextTypes = {
+  router: PropTypes.object,
+};
+
+export default connect(identity)(DocumentView);

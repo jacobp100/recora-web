@@ -1,4 +1,7 @@
-import { pathOr, assoc, assocPath, append, forEach, reduce } from 'ramda';
+import {
+  pathOr, dissoc, assoc, assocPath, append, forEach, reduce, evolve, over, lensProp, curry,
+  unless, isNil, reject, equals
+} from 'ramda';
 
 const defaultState = {
   // Array of ids to link document__ entries to
@@ -28,6 +31,9 @@ const localStorageKeys = [
   // to avoid reflowing content afterwards
   'sectionTotalTexts',
 ];
+
+// Old version of Ramda...
+const without = curry((value, list) => reject(equals(value), list));
 
 function saveToLocalStorage(state) {
   forEach(storageKey => {
@@ -82,6 +88,29 @@ function reducer(action, state) {
       return assocPath(['sectionTotals', sectionId], action.total, state);
     case 'SET_TOTAL_TEXT':
       return assocPath(['sectionTotalTexts', sectionId], action.totalText, state);
+    case 'DELETE_DOCUMENT':
+      const dropDocumentId = dissoc(documentId);
+      return evolve({
+        documents: without(documentId),
+        documentLocales: dropDocumentId,
+        documentConfigs: dropDocumentId,
+        documentTitles: dropDocumentId,
+        documentSections: dropDocumentId,
+      }, state);
+    case 'DELETE_SECTION':
+      const dropSectionId = dissoc(sectionId);
+      return evolve({
+        documentSections: over(
+          lensProp(documentId),
+          unless(isNil, without(sectionId))
+        ),
+        sectionLocals: dropSectionId,
+        sectionInstances: dropSectionId,
+        sectionTextInputs: dropSectionId,
+        sectionEntries: dropSectionId,
+        sectionTotals: dropSectionId,
+        sectionTotalTexts: dropSectionId,
+      }, state);
     default:
       return state;
   }
