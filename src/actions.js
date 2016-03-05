@@ -104,7 +104,9 @@ export const setDocumentTitle = (documentId, title) => (
 export const deleteDocument = (documentId) => (dispatch, getState) => {
   const { documentSections } = getState();
   const sections = documentSections[documentId];
-  forEach(partial(deleteSection, [documentId]), sections);
+  forEach(sectionId => {
+    dispatch(deleteSection(documentId, sectionId));
+  }, sections);
   dispatch({ type: 'DELETE_DOCUMENT', documentId });
 };
 
