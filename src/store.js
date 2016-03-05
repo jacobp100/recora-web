@@ -112,6 +112,7 @@ function reducer(action, state) {
         ),
         sectionLocals: dropSectionId,
         sectionInstances: dropSectionId,
+        sectionTitles: dropSectionId,
         sectionTextInputs: dropSectionId,
         sectionEntries: dropSectionId,
         sectionTotals: dropSectionId,
@@ -129,7 +130,7 @@ export default function store(state = loadFromLocalStorage(), action) {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       saveToLocalStorage(newState);
-    });
+    }, 50);
   }
   return newState;
 }

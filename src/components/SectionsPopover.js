@@ -13,7 +13,7 @@ const getElementKeys = map(prop('key'));
 export default class SectionsPopover extends React.Component {
   render() {
     const {
-      top, left, sections, sectionTitles, onAddSection, onRenameSection, onClose,
+      top, left, sections, sectionTitles, onAddSection, onRenameSection, onDeleteSection, onClose,
     } = this.props;
     const onDrop = (order) => (this.props.onReorderSections(getElementKeys(order)));
 
@@ -23,6 +23,7 @@ export default class SectionsPopover extends React.Component {
         title={sectionTitles[sectionId]}
         index={index}
         onSetTitle={partial(onRenameSection, [sectionId])}
+        onDelete={partial(onDeleteSection, [sectionId])}
       />
     ), sections);
 

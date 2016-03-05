@@ -1,6 +1,6 @@
 import {
   map, reduce, head, tail, contains, flatten, values, forEach, groupBy, prop, pipe, fromPairs,
-  reject, flip, concat,
+  reject, flip, concat, partial,
 } from 'ramda';
 import Recora from 'recora';
 import { ADD as add } from 'recora/src/math';
@@ -65,6 +65,10 @@ export const setSectionTitle = (sectionId, title) => (
   { type: 'SET_SECTION_TITLE', sectionId, title }
 );
 
+export const deleteSection = (documentId, sectionId) => (
+  { type: 'DELETE_SECTION', documentId, sectionId }
+);
+
 export const addSection = (documentId) => (dispatch, getState) => {
   const { documentSections } = getState();
   const sectionId = nextId('section-', flatten(values(documentSections)));
@@ -100,9 +104,7 @@ export const setDocumentTitle = (documentId, title) => (
 export const deleteDocument = (documentId) => (dispatch, getState) => {
   const { documentSections } = getState();
   const sections = documentSections[documentId];
-  forEach(sectionId => {
-    dispatch({ type: 'DELETE_SECTION', sectionId });
-  }, sections);
+  forEach(partial(deleteSection, [documentId]), sections);
   dispatch({ type: 'DELETE_DOCUMENT', documentId });
 };
 

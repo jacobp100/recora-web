@@ -21,7 +21,7 @@ export default class SectionsPopoverItem extends React.Component {
   }
 
   render() {
-    const { index } = this.props;
+    const { index, onDelete } = this.props;
     const { title, isEditing } = this.state;
 
     if (isEditing) {
@@ -40,7 +40,7 @@ export default class SectionsPopoverItem extends React.Component {
     return (
       <div className={sectionsPopover.item} onDoubleClick={this.toggleEditing}>
         { title || `Section ${index + 1}` }
-        <button className={sectionsPopover.deleteIcon}>
+        <button className={sectionsPopover.deleteIcon} onClick={onDelete}>
           <span className="pe-7s-trash" />
         </button>
       </div>
