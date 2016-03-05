@@ -1,0 +1,52 @@
+.sectionsContainer {
+  margin: 1em 0;
+  user-select: none;
+}
+
+.item {
+  position: relative;
+  padding: 0.5em;
+  border-radius: 2px;
+}
+.item:hover {
+  background: #ccc;
+}
+:global(.react-drag-dragging) {
+  position: absolute;
+}
+.itemEdit {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5em;
+  border: 0;
+  margin: 0;
+  border-radius: 2px;
+  background: #ccc;
+  font: inherit;
+}
+
+.deleteIcon {
+  position: absolute;
+  top: 0.25em;
+  right: 0.25em;
+  padding: 0.25em;
+  border: 0;
+  margin: 0;
+  border-radius: 2px;
+  background: transparent;
+  font: inherit;
+}
+.deleteIcon:hover, .deleteIcon:focus {
+  background: #333;
+  color: white;
+}
+:global(.react-drag-dragging) .deleteIcon {
+  display: none;
+}
+
+.details {
+  text-align: center;
+  margin: 1em 0 0;
+  font-size: 0.667em;
+  color: #555;
+}
