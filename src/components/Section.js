@@ -13,7 +13,7 @@ export default function Section({ title, textInputs, entries, total, onChange })
   );
 
   return (
-    <div>
+    <div className={section.container}>
       { titleElement }
       <TextView textInputs={textInputs} entries={entries} onChange={onChange} />
       { totalElement }

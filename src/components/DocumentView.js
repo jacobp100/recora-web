@@ -63,6 +63,7 @@ class DocumentView extends React.Component {
   }
 
   componentWillMount() {
+    // Done this way so if you delete a document, you'll navigate back home automatically
     this.componentWillReceiveProps(this.props);
   }
 
