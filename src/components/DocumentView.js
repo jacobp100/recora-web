@@ -10,6 +10,7 @@ import UnitsPopup from './UnitsPopup';
 import SectionsPopover from './SectionsPopover';
 import {
   setTextInputs, addSection, setSectionTitle, deleteSection, reorderSections, deleteDocument,
+  setConfig,
 } from '../actions';
 
 const UNITS = 'units';
@@ -25,20 +26,22 @@ class DocumentView extends React.Component {
       popover: null,
     };
 
-    this.getId = () => this.props.params.id;
+    const getId = () => this.props.params.id;
 
     this.setTextInputs = (sectionId) => (e) => this.props.dispatch(setTextInputs(
-      this.getId(), sectionId, e.target.value.split('\n')));
+      getId(), sectionId, e.target.value.split('\n')));
     this.addSection = () => this.props.dispatch(
-      addSection(this.getId()));
+      addSection(getId()));
     this.setSectionTitle = (sectionId, title) => this.props.dispatch(
       setSectionTitle(sectionId, title));
     this.deleteSection = (sectionId) => this.props.dispatch(
-      deleteSection(this.getId(), sectionId));
+      deleteSection(getId(), sectionId));
     this.reorderSections = (order) => this.props.dispatch(
-      reorderSections(this.getId(), order));
+      reorderSections(getId(), order));
+    this.setConfig = (config) => this.props.dispatch(
+      setConfig(getId(), config));
     this.deleteDocument = () => this.props.dispatch(
-      deleteDocument(this.getId()));
+      deleteDocument(getId()));
 
     this.setPopover = (type, e) => {
       const { popover } = this.state;
@@ -97,7 +100,7 @@ class DocumentView extends React.Component {
         <SettingsPopup onClose={this.closePopup} onDeleteDocument={this.deleteDocument} />
       )],
       [equals(UNITS), () => (
-        <UnitsPopup config={config} onClose={this.closePopup} />
+        <UnitsPopup config={config} onSubmit={this.setConfig} onClose={this.closePopup} />
       )],
       [always(true), always(null)],
     ])(popup);

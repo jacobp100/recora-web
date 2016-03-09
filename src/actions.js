@@ -85,16 +85,23 @@ export const reorderSections = (documentId, orderedSectionIds) => (dispatch, get
   dispatch({ type: 'SET_SECTIONS', documentId, sectionIds });
 };
 
-export const setConfig = (documentId, locale, config) => (dispatch, getState) => {
+const recomputeDocument = (documentId) => (dispatch, getState) => {
   const { documentSections, sectionLocals } = getState();
-  dispatch({ type: 'SET_LOCALE', documentId, locale });
-  dispatch({ type: 'SET_CONFIG', documentId, config });
-
   const sections = documentSections[documentId] || [];
   forEach(sectionId => {
     const sectionConfig = sectionLocals[sectionId] || {};
     dispatch(setSectionLocals(documentId, sectionId, sectionConfig));
   }, sections);
+};
+
+export const setLocale = (documentId, locale) => (dispatch) => {
+  dispatch({ type: 'SET_LOCALE', documentId, locale });
+  dispatch(recomputeDocument(documentId));
+};
+
+export const setConfig = (documentId, config) => (dispatch) => {
+  dispatch({ type: 'SET_CONFIG', documentId, config });
+  dispatch(recomputeDocument(documentId));
 };
 
 export const setDocumentTitle = (documentId, title) => (
@@ -124,7 +131,7 @@ export const addDocument = () => (dispatch, getState) => {
       date: now.getDate(),
     },
   };
-  dispatch(setConfig(documentId, 'en', config));
+  dispatch(setConfig(documentId, config));
   dispatch(addSection(documentId));
   dispatch({ type: 'ADD_DOCUMENT', documentId });
 };
@@ -133,6 +140,8 @@ export const loadDocument = (documentId) => (dispatch, getState) => {
   const { documentLocales, documentConfigs } = getState();
   const locale = documentLocales[documentId];
   const config = documentConfigs[documentId];
-  // Calls into setTextInputs, causing entire the document to be calculated
-  dispatch(setConfig(documentId, locale, config));
+  // Duplication as to not compute the document twice
+  dispatch({ type: 'SET_LOCALE', documentId, locale });
+  dispatch({ type: 'SET_CONFIG', documentId, config });
+  dispatch(recomputeDocument());
 };

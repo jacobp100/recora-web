@@ -1,5 +1,5 @@
 import React from 'react';
-import { map, pickBy, keys, propEq } from 'ramda';
+import { map, pickBy, keys, propEq, assoc } from 'ramda';
 import units from 'recora/src/data/environment/units';
 import popup from '../../styles/popup.css';
 import base from '../../styles/base.css';
@@ -18,8 +18,20 @@ const getUnitsForType = (type) => keys(pickBy(propEq('type', type), units));
 export default class SettingsPopup extends React.Component {
   constructor({ config }) {
     super();
+
+    this.setUnit = ({ target }) => {
+      const { value, name } = target;
+      const si = assoc(name, value, this.state.si);
+      this.setState({ si });
+    };
+    this.submit = () => {
+      this.props.onSubmit(this.state);
+      this.props.onClose();
+    };
+
     this.state = config;
   }
+
   render() {
     const { onClose } = this.props;
     const { si } = this.state;
@@ -34,7 +46,7 @@ export default class SettingsPopup extends React.Component {
           <label className={popup.label} htmlFor={`unit-${type}`}>
             { title }
           </label>
-          <select className={popup.dropdown} value={si[type]}>
+          <select className={popup.dropdown} name={type} value={si[type]} onChange={this.setUnit}>
             { options }
           </select>
         </div>
@@ -52,7 +64,7 @@ export default class SettingsPopup extends React.Component {
           </p>
           <button className={base.button}>Add Currency Rate</button>
           <div className={popup.buttonGroup}>
-            <button className={popup.button}>
+            <button className={popup.button} onClick={this.submit}>
               Save Changes
             </button>
             <button className={popup.button} onClick={onClose}>
