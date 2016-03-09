@@ -1,14 +1,29 @@
+/* eslint no-use-before-define: [0] */
+
 import {
   map, reduce, head, tail, contains, flatten, values, forEach, groupBy, prop, pipe, fromPairs,
-  reject, flip, concat, partial,
+  reject, flip, concat, filter, equals, unless, ifElse, always, isNil,
 } from 'ramda';
 import Recora from 'recora';
 import { ADD as add } from 'recora/src/math';
 import { toString as typeToString } from 'recora/src/types/types';
+import { isEntity, isValueAssignment } from 'recora/src/types/util';
 import defaultSi from 'recora/src/data/environment/si';
 
 const keyBy = pipe(groupBy, map(head));
-const entryResult = entry => entry && entry.result;
+const entryResult = unless(isNil, prop('result'));
+const entryResultIsValueAssignmentToEntity = pipe(
+  entryResult,
+  unless(isNil, unless(isValueAssignment, always(null))),
+  unless(isNil, prop('value')),
+  ifElse(isNil, always(false), isEntity)
+);
+const keyLocals = pipe(
+  map(prop('result')),
+  groupBy(prop('key')),
+  map(head),
+  map(prop('value'))
+);
 
 const nextId = (key, existingIds) => {
   let newId;
@@ -29,6 +44,16 @@ export const setTextInputs = (documentId, sectionId, textInputs, useCache = true
     const entries = map(textInput => (
       entryCache[textInput] || instance.parse(textInput)
     ), textInputs);
+
+    const assignmentsBefore = filter(entryResultIsValueAssignmentToEntity, existingEntries);
+    const assignmentsAfter = filter(entryResultIsValueAssignmentToEntity, entries);
+
+    if (useCache && !equals(assignmentsBefore, assignmentsAfter)) {
+      const locals = keyLocals(assignmentsAfter);
+      dispatch(setSectionLocalsWithTextInputs(documentId, sectionId, locals, textInputs));
+      return;
+    }
+
     const context = instance && instance.getContext();
     const total = reduce(
       (lhs, rhs) => (lhs && rhs) ? add(context, lhs, rhs) : lhs,
@@ -42,23 +67,29 @@ export const setTextInputs = (documentId, sectionId, textInputs, useCache = true
     dispatch({ type: 'SET_TOTAL_TEXT', sectionId, totalText });
   };
 
+const setSectionLocalsWithTextInputs = (documentId, sectionId, locals, textInputs) =>
+  (dispatch, getState) => {
+    const { documentLocales, documentConfigs, sectionInstances } = getState();
+    const locale = documentLocales[documentId];
+    const config = documentConfigs[documentId];
+    const useCache = !(sectionId in sectionInstances);
+
+    const instance = new Recora(locale, {
+      units: fromPairs(config.unitPairs),
+      si: config.si,
+      currentTime: config.currentTime,
+      constants: locals || {},
+    });
+
+    dispatch({ type: 'SET_LOCALS', sectionId, locals });
+    dispatch({ type: 'SET_INSTANCE', sectionId, instance });
+    dispatch(setTextInputs(documentId, sectionId, textInputs, useCache));
+  };
+
 export const setSectionLocals = (documentId, sectionId, locals) => (dispatch, getState) => {
-  const { documentLocales, documentConfigs, sectionTextInputs } = getState();
-  const locale = documentLocales[documentId];
-  const config = documentConfigs[documentId];
-
-  const instance = new Recora(locale, {
-    units: fromPairs(config.unitPairs),
-    si: config.si,
-    currentTime: config.currentTime,
-    constants: locals || {},
-  });
-
-  dispatch({ type: 'SET_LOCALS', sectionId, locals });
-  dispatch({ type: 'SET_INSTANCE', sectionId, instance });
-  // Force recalculate section
+  const { sectionTextInputs } = getState();
   const textInputs = sectionTextInputs[sectionId] || [];
-  dispatch(setTextInputs(documentId, sectionId, textInputs, false));
+  dispatch(setSectionLocalsWithTextInputs(documentId, sectionId, locals, textInputs));
 };
 
 export const setSectionTitle = (sectionId, title) => (
@@ -143,5 +174,5 @@ export const loadDocument = (documentId) => (dispatch, getState) => {
   // Duplication as to not compute the document twice
   dispatch({ type: 'SET_LOCALE', documentId, locale });
   dispatch({ type: 'SET_CONFIG', documentId, config });
-  dispatch(recomputeDocument());
+  dispatch(recomputeDocument(documentId));
 };
