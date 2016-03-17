@@ -48,16 +48,16 @@ class DocumentView extends React.Component {
   }
 
   componentWillReceiveProps({ params, documents }) {
-    const { id } = params;
+    const { documentId } = params;
 
-    if (!contains(id, documents)) {
+    if (!contains(documentId, documents)) {
       this.context.router.push('/');
     }
   }
 
   render() {
     const { params, documents } = this.props;
-    const { id: documentId } = params;
+    const { documentId } = params;
 
     if (!contains(documentId, documents)) {
       return <div />;

@@ -15,14 +15,14 @@ const store = createStore(
 );
 
 const onEnterDocument = (state) => Promise.resolve().then(() => {
-  store.dispatch(loadDocument(state.params.id));
+  store.dispatch(loadDocument(state.params.documentId));
 });
 
 render(
   <Provider store={store}>
     <Router history={hashHistory}>
       <Route path="/">
-        <Route path=":id" component={DocumentView} onEnter={onEnterDocument} />
+        <Route path=":documentId" component={DocumentView} onEnter={onEnterDocument} />
         <IndexRoute component={DocumentList} />
       </Route>
     </Router>

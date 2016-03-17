@@ -18,12 +18,12 @@ const DocumentList = ({
   sectionTextInputs,
   addDocument,
 }) => {
-  let pagePreviews = map(id => (
+  let pagePreviews = map(documentId => (
     <DocumentPreview
-      key={id}
-      id={id}
-      title={documentTitles[id]}
-      sections={documentSections[id]}
+      key={documentId}
+      documentId={documentId}
+      title={documentTitles[documentId]}
+      sections={documentSections[documentId]}
       sectionTextInputs={sectionTextInputs}
     />
   ), documents);

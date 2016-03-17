@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import * as documentPreview from '../../styles/document-preview.css';
 import * as base from '../../styles/base.css';
 
-const DocumentPreview = ({ id, title, sections, sectionTextInputs }) => {
+const DocumentPreview = ({ documentId, title, sections, sectionTextInputs }) => {
   const sectionElements = map(sectionId => (
     <span
       key={sectionId}
@@ -18,8 +18,8 @@ const DocumentPreview = ({ id, title, sections, sectionTextInputs }) => {
   const linkClassName = classnames(documentPreview.container, base.activeOpacity);
 
   return (
-    <Link className={linkClassName} key={id} to={`/${id}`}>
-      <TweenState id={`doc-${id}`}>
+    <Link className={linkClassName} key={documentId} to={`/${documentId}`}>
+      <TweenState id={`doc-${documentId}`}>
         <span className={documentPreview.page}>
           { sectionElements }
         </span>
@@ -32,7 +32,7 @@ const DocumentPreview = ({ id, title, sections, sectionTextInputs }) => {
 };
 
 DocumentPreview.propTypes = {
-  id: PropTypes.string,
+  documentId: PropTypes.string,
   title: PropTypes.string,
   sections: PropTypes.array,
   sectionTextInputs: PropTypes.object,
