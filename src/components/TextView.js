@@ -1,8 +1,18 @@
-import { map, mapAccum, objOf, zip, flatten, last, append, reject, isNil } from 'ramda';
+import {
+  map, mapAccum, objOf, zip, flatten, last, append, reject, isNil, split, prop, pipe,
+} from 'ramda';
 import React from 'react';
+import { connect } from 'react-redux';
 import classnames from 'classnames';
+import { setTextInputs } from '../actions';
 import * as tagNames from '../../styles/tag-names.css';
 import * as textView from '../../styles/text-view.css';
+
+const textToArray = pipe(
+  prop('target'),
+  prop('value'),
+  split('\n')
+);
 
 const SpanningElement = ({ entry, start = 0, end = Infinity, type }) => (
   <span className={classnames('tag', tagNames[type])}>
@@ -10,7 +20,7 @@ const SpanningElement = ({ entry, start = 0, end = Infinity, type }) => (
   </span>
 );
 
-function TextViewEntry({ entry, text }) {
+const TextViewEntry = ({ entry, text }) => {
   // Recora strips out some noop tags from the start, middle and end,
   // but we need to actually show that text.
   let entryTags = entry.tags || [{ start: 0, end: entry.text.length }];
@@ -21,12 +31,18 @@ function TextViewEntry({ entry, text }) {
   }
 
   let spanningElements = mapAccum((index, { start, end, type }) => {
+    const preKey = `pre-${start}`;
+    const key = `${start}-${end}`;
+
     const elements = reject(isNil, [
-      start !== index ? <SpanningElement entry={entry} start={index} end={start} /> : null,
-      <SpanningElement entry={entry} start={start} end={end} type={type} />,
+      start !== index
+        ? <SpanningElement key={preKey} entry={entry} start={index} end={start} />
+        : null,
+      <SpanningElement key={key} entry={entry} start={start} end={end} type={type} />,
     ]);
     return [end, elements];
   }, 0, entryTags)[1];
+
   spanningElements = flatten(spanningElements);
 
   return (
@@ -39,9 +55,9 @@ function TextViewEntry({ entry, text }) {
       </div>
     </div>
   );
-}
+};
 
-export default function TextView({ textInputs, entries, onChange }) {
+const TextView = ({ textInputs, entries, setTextInputs }) => {
   const text = textInputs.join('\n');
   const entriesWithText = entries || map(objOf('text'), textInputs);
 
@@ -70,9 +86,22 @@ export default function TextView({ textInputs, entries, onChange }) {
       <textarea
         className={textView.textarea}
         value={text}
-        onChange={onChange}
+        onChange={pipe(textToArray, setTextInputs)}
       />
       { values }
     </div>
   );
-}
+};
+
+export default connect(
+  ({ sectionTextInputs, sectionEntries }, { sectionId }) => ({
+    textInputs: prop(sectionId, sectionTextInputs || {}),
+    entries: prop(sectionId, sectionEntries || {}),
+  }),
+  (dispatch, { documentId, sectionId }) => ({
+    setTextInputs: (inputs) =>
+      dispatch(setTextInputs(documentId, sectionId, inputs)),
+  }),
+  null,
+  { pure: true }
+)(TextView);

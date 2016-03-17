@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import * as documentPreview from '../../styles/document-preview.css';
 import * as base from '../../styles/base.css';
 
-export default function DocumentPreview({ id, title, sections, sectionTextInputs }) {
+const DocumentPreview = ({ id, title, sections, sectionTextInputs }) => {
   const sectionElements = map(sectionId => (
     <span
       key={sectionId}
@@ -29,10 +29,13 @@ export default function DocumentPreview({ id, title, sections, sectionTextInputs
       </span>
     </Link>
   );
-}
+};
+
 DocumentPreview.propTypes = {
   id: PropTypes.string,
   title: PropTypes.string,
   sections: PropTypes.array,
   sectionTextInputs: PropTypes.object,
 };
+
+export default DocumentPreview;

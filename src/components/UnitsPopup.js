@@ -1,6 +1,8 @@
-import React from 'react';
-import { map, pickBy, keys, propEq, assoc } from 'ramda';
+import React, { Component } from 'react';
+import { map, pickBy, keys, propEq, assoc, prop, allPass as juxt } from 'ramda';
+import { connect } from 'react-redux';
 import units from 'recora/src/data/environment/units';
+import { setConfig } from '../actions';
 import popup from '../../styles/popup.css';
 import base from '../../styles/base.css';
 
@@ -15,18 +17,19 @@ const visibleSiUnits = [
 
 const getUnitsForType = (type) => keys(pickBy(propEq('type', type), units));
 
-export default class SettingsPopup extends React.Component {
+class UnitsPopup extends Component {
   constructor({ config }) {
     super();
+
+    this.onSubmit = () => {
+      this.props.setConfig(this.state);
+      this.props.onClose();
+    };
 
     this.setUnit = ({ target }) => {
       const { value, name } = target;
       const si = assoc(name, value, this.state.si);
       this.setState({ si });
-    };
-    this.submit = () => {
-      this.props.onSubmit(this.state);
-      this.props.onClose();
     };
 
     this.state = config;
@@ -38,7 +41,7 @@ export default class SettingsPopup extends React.Component {
 
     const unitSettings = map(([title, type]) => {
       const options = map((option) => (
-        <option value={option}>{ option }</option>
+        <option key={option} value={option}>{ option }</option>
       ), getUnitsForType(type));
 
       return (
@@ -64,7 +67,7 @@ export default class SettingsPopup extends React.Component {
           </p>
           <button className={base.button}>Add Currency Rate</button>
           <div className={popup.buttonGroup}>
-            <button className={popup.button} onClick={this.submit}>
+            <button className={popup.button} onClick={this.onSubmit}>
               Save Changes
             </button>
             <button className={popup.button} onClick={onClose}>
@@ -76,3 +79,15 @@ export default class SettingsPopup extends React.Component {
     );
   }
 }
+
+export default connect(
+  ({ documentConfigs }, { documentId }) => ({
+    config: prop(documentId, documentConfigs || {}),
+  }),
+  (dispatch, { documentId }) => ({
+    setConfig: (config) =>
+      dispatch(setConfig(documentId, config)),
+  }),
+  null,
+  { pure: true }
+)(UnitsPopup);

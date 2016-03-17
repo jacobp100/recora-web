@@ -1,40 +1,30 @@
-import React, { PropTypes } from 'react';
-import { map } from 'ramda';
+import { map, prop } from 'ramda';
+import React from 'react';
+import { connect } from 'react-redux';
 import Section from './Section';
 import * as page from '../../styles/page.css';
 
-export default function Page({
-  title,
-  sections,
-  sectionTitles,
-  sectionTextInputs,
-  sectionEntries,
-  sectionTotalTexts,
-  setTextInputs,
-}) {
-  return (
-    <div className={page.container}>
-      <h1 className={page.title}>{ title }</h1>
-      {
-        map(sectionId => (
-          <Section
-            key={sectionId}
-            title={sectionTitles[sectionId]}
-            textInputs={sectionTextInputs[sectionId]}
-            entries={sectionEntries[sectionId]}
-            total={sectionTotalTexts[sectionId]}
-            onChange={setTextInputs(sectionId)}
-          />
-        ), sections)
-      }
-    </div>
-  );
-}
-Page.propTypes = {
-  title: PropTypes.string,
-  sections: PropTypes.array,
-  sectionTextInputs: PropTypes.object,
-  sectionEntries: PropTypes.object,
-  sectionTotalTexts: PropTypes.object,
-  setTextInputs: PropTypes.func,
-};
+const Page = ({ documentId, title, sections }) => (
+  <div className={page.container}>
+    <h1 className={page.title}>{ title }</h1>
+    {
+      map(sectionId => (
+        <Section
+          key={sectionId}
+          documentId={documentId}
+          sectionId={sectionId}
+        />
+      ), sections)
+    }
+  </div>
+);
+
+export default connect(
+  ({ documentTitles, documentSections }, { documentId }) => ({
+    title: prop(documentId, documentTitles || {}),
+    sections: prop(documentId, documentSections || {}),
+  }),
+  null,
+  null,
+  { pure: true }
+)(Page);

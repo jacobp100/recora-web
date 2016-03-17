@@ -19,46 +19,38 @@ const horizontalClassName = classnames(
   base.activeOpacity
 );
 
-export function StackLink({ icon, text, to }) {
-  return (
-    <Link className={stackClassName} to={to} >
-      <span className={headerButton.stackIcon}>
-        <span className={`pe-7s-${icon}`} />
-      </span>
-      <span className={headerButton.stackLabel}>{ text }</span>
-    </Link>
-  );
-}
+export const StackLink = ({ icon, text, to }) => (
+  <Link className={stackClassName} to={to} >
+    <span className={headerButton.stackIcon}>
+      <span className={`pe-7s-${icon}`} />
+    </span>
+    <span className={headerButton.stackLabel}>{ text }</span>
+  </Link>
+);
 
-export function HorizontalLink({ icon, text, to }) {
-  return (
-    <Link className={horizontalClassName} to={to} >
-      <span className={headerButton.horizontalIcon}>
-        <span className={`pe-7s-${icon}`} />
-      </span>
-      <span className={headerButton.horizontalLabel}>{ text }</span>
-    </Link>
-  );
-}
+export const HorizontalLink = ({ icon, text, to }) => (
+  <Link className={horizontalClassName} to={to} >
+    <span className={headerButton.horizontalIcon}>
+      <span className={`pe-7s-${icon}`} />
+    </span>
+    <span className={headerButton.horizontalLabel}>{ text }</span>
+  </Link>
+);
 
-export function StackButton({ icon, text, onClick }) {
-  return (
-    <button className={stackClassName} onClick={onClick}>
-      <span className={headerButton.stackIcon}>
-        <span className={`pe-7s-${icon}`} />
-      </span>
-      <span className={headerButton.stackLabel}>{ text }</span>
-    </button>
-  );
-}
+export const StackButton = ({ icon, text, onClick }) => (
+  <button className={stackClassName} onClick={onClick}>
+    <span className={headerButton.stackIcon}>
+      <span className={`pe-7s-${icon}`} />
+    </span>
+    <span className={headerButton.stackLabel}>{ text }</span>
+  </button>
+);
 
-export function HorizontalButton({ icon, text, onClick }) {
-  return (
-    <button className={horizontalClassName} onClick={onClick}>
-      <span className={headerButton.horizontalIcon}>
-        <span className={`pe-7s-${icon}`} />
-      </span>
-      <span className={headerButton.horizontalLabel}>{ text }</span>
-    </button>
-  );
-}
+export const HorizontalButton = ({ icon, text, onClick }) => (
+  <button className={horizontalClassName} onClick={onClick}>
+    <span className={headerButton.horizontalIcon}>
+      <span className={`pe-7s-${icon}`} />
+    </span>
+    <span className={headerButton.horizontalLabel}>{ text }</span>
+  </button>
+);

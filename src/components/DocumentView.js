@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { identity, equals, always, cond, contains, prop } from 'ramda';
+import { identity, equals, always, cond, contains, prop, objOf } from 'ramda';
 import { connect } from 'react-redux';
 import { TweenState } from 'state-transitions';
 import Page from './page';
@@ -8,10 +8,6 @@ import { StackButton, HorizontalLink } from './HeaderButton';
 import SettingsPopup from './SettingsPopup';
 import UnitsPopup from './UnitsPopup';
 import SectionsPopover from './SectionsPopover';
-import {
-  setTextInputs, addSection, setSectionTitle, deleteSection, reorderSections, deleteDocument,
-  setConfig,
-} from '../actions';
 
 const UNITS = 'units';
 const SETTINGS = 'settings';
@@ -26,36 +22,17 @@ class DocumentView extends React.Component {
       popover: null,
     };
 
-    const getId = () => this.props.params.id;
-
-    this.setTextInputs = (sectionId) => (e) => this.props.dispatch(setTextInputs(
-      getId(), sectionId, e.target.value.split('\n')));
-    this.addSection = () => this.props.dispatch(
-      addSection(getId()));
-    this.setSectionTitle = (sectionId, title) => this.props.dispatch(
-      setSectionTitle(sectionId, title));
-    this.deleteSection = (sectionId) => this.props.dispatch(
-      deleteSection(getId(), sectionId));
-    this.reorderSections = (order) => this.props.dispatch(
-      reorderSections(getId(), order));
-    this.setConfig = (config) => this.props.dispatch(
-      setConfig(getId(), config));
-    this.deleteDocument = () => this.props.dispatch(
-      deleteDocument(getId()));
-
     this.setPopover = (type, e) => {
       const { popover } = this.state;
       if (popover && popover.type === type) {
         this.setState({ popover: null });
       } else {
         const { bottom, left, width } = e.currentTarget.getBoundingClientRect();
-        this.setState({
-          popover: {
-            type,
-            top: bottom,
-            left: left + width / 2,
-          },
-        });
+        this.setState(objOf('popover', {
+          type,
+          top: bottom,
+          left: left + width / 2,
+        }));
       }
     };
     this.toggleSections = (e) => this.setPopover(SECTIONS, e);
@@ -79,17 +56,10 @@ class DocumentView extends React.Component {
   }
 
   render() {
-    const {
-      params, documents, documentTitles, documentSections, documentConfigs, sectionTitles,
-      sectionTextInputs, sectionEntries, sectionTotalTexts,
-    } = this.props;
-    const { id } = params;
+    const { params, documents } = this.props;
+    const { id: documentId } = params;
 
-    const title = documentTitles[id];
-    const sections = documentSections[id];
-    const config = documentConfigs[id];
-
-    if (!contains(id, documents)) {
+    if (!contains(documentId, documents)) {
       return <div />;
     }
 
@@ -97,10 +67,10 @@ class DocumentView extends React.Component {
 
     const popupElement = cond([
       [equals(SETTINGS), () => (
-        <SettingsPopup onClose={this.closePopup} onDeleteDocument={this.deleteDocument} />
+        <SettingsPopup documentId={documentId} onClose={this.closePopup} />
       )],
       [equals(UNITS), () => (
-        <UnitsPopup config={config} onSubmit={this.setConfig} onClose={this.closePopup} />
+        <UnitsPopup documentId={documentId} onClose={this.closePopup} />
       )],
       [always(true), always(null)],
     ])(popup);
@@ -108,14 +78,9 @@ class DocumentView extends React.Component {
     const popoverElement = cond([
       [equals(SECTIONS), () => (
         <SectionsPopover
+          documentId={documentId}
           top={popover.top}
           left={popover.left}
-          sections={sections}
-          sectionTitles={sectionTitles}
-          onAddSection={this.addSection}
-          onRenameSection={this.setSectionTitle}
-          onReorderSections={this.reorderSections}
-          onDeleteSection={this.deleteSection}
           onClose={this.closePopover}
         />
       )],
@@ -138,16 +103,8 @@ class DocumentView extends React.Component {
             <StackButton icon="config" text="Settings" onClick={this.toggleSettingsPopup} />
           </HeaderSection>
         </Header>
-        <TweenState id={`doc-${id}`} fadeOutDuration={0.4}>
-          <Page
-            title={title}
-            sections={sections}
-            sectionTitles={sectionTitles}
-            sectionTextInputs={sectionTextInputs}
-            sectionEntries={sectionEntries}
-            sectionTotalTexts={sectionTotalTexts}
-            setTextInputs={this.setTextInputs}
-          />
+        <TweenState id={`doc-${documentId}`} fadeOutDuration={0.4}>
+          <Page documentId={documentId} />
         </TweenState>
         { popupElement }
         { popoverElement }
