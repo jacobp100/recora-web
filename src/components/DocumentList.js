@@ -61,10 +61,7 @@ export default connect(
     documentSections,
     sectionTextInputs,
   }),
-  (dispatch) => ({
-    addDocument: () =>
-      dispatch(addDocument()),
-  }),
+  { addDocument },
   null,
   { pure: true }
 )(DocumentList);

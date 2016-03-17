@@ -1,5 +1,5 @@
 import {
-  map, mapAccum, objOf, zip, flatten, last, append, reject, isNil, split, prop, pipe,
+  map, mapAccum, objOf, zip, flatten, last, append, reject, isNil, split, prop, pipe, partial,
 } from 'ramda';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -57,7 +57,7 @@ const TextViewEntry = ({ entry, text }) => {
   );
 };
 
-const TextView = ({ textInputs, entries, setTextInputs }) => {
+const TextView = ({ documentId, sectionId, textInputs, entries, setTextInputs }) => {
   const text = textInputs.join('\n');
   const entriesWithText = entries || map(objOf('text'), textInputs);
 
@@ -86,7 +86,7 @@ const TextView = ({ textInputs, entries, setTextInputs }) => {
       <textarea
         className={textView.textarea}
         value={text}
-        onChange={pipe(textToArray, setTextInputs)}
+        onChange={pipe(textToArray, partial(setTextInputs, [documentId, sectionId]))}
       />
       { values }
     </div>
@@ -95,13 +95,11 @@ const TextView = ({ textInputs, entries, setTextInputs }) => {
 
 export default connect(
   ({ sectionTextInputs, sectionEntries }, { sectionId }) => ({
+    sectionId,
     textInputs: prop(sectionId, sectionTextInputs || {}),
     entries: prop(sectionId, sectionEntries || {}),
   }),
-  (dispatch, { documentId, sectionId }) => ({
-    setTextInputs: (inputs) =>
-      dispatch(setTextInputs(documentId, sectionId, inputs)),
-  }),
+  { setTextInputs },
   null,
   { pure: true }
 )(TextView);

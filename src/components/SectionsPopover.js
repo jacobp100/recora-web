@@ -15,6 +15,7 @@ import * as base from '../../styles/base.css';
 const getElementKeys = map(prop('key'));
 
 const SectionsPopover = ({
+  documentId,
   top,
   left,
   sections,
@@ -25,7 +26,7 @@ const SectionsPopover = ({
   reorderSections,
   onClose,
 }) => {
-  const onDrop = (order) => reorderSections(getElementKeys(order));
+  const onDrop = (order) => reorderSections(documentId, getElementKeys(order));
 
   const sectionElements = addIndex(map)((sectionId, index) => (
     <SectionsPopoverItem
@@ -33,7 +34,7 @@ const SectionsPopover = ({
       title={sectionTitles[sectionId]}
       index={index}
       onSetTitle={partial(setSectionTitle, [sectionId])}
-      onDelete={partial(deleteSection, [sectionId])}
+      onDelete={partial(deleteSection, [documentId, sectionId])}
     />
   ), sections);
 
@@ -41,7 +42,7 @@ const SectionsPopover = ({
     <Popover top={top} left={left} width={300} onClose={onClose}>
       <button
         className={classnames(base.button, base.buttonBlock)}
-        onClick={addSection}
+        onClick={partial(addSection, [documentId])}
       >
         Add Section
       </button>
@@ -62,16 +63,7 @@ export default connect(
     sections: prop(documentId, documentSections || {}),
     sectionTitles,
   }),
-  (dispatch, { documentId }) => ({
-    addSection: () =>
-      dispatch(addSection(documentId)),
-    setSectionTitle: (sectionId, title) =>
-      dispatch(setSectionTitle(sectionId, title)),
-    deleteSection: (sectionId) =>
-      dispatch(deleteSection(documentId, sectionId)),
-    reorderSections: (orderedSectionIds) =>
-      dispatch(reorderSections(documentId, orderedSectionIds)),
-  }),
+  { addSection, setSectionTitle, deleteSection, reorderSections },
   null,
   { pure: true }
 )(SectionsPopover);

@@ -162,9 +162,11 @@ export const addDocument = () => (dispatch, getState) => {
       date: now.getDate(),
     },
   };
-  dispatch(setConfig(documentId, config));
+  dispatch({ type: 'SET_LOCALE', documentId, locale: 'en' });
+  dispatch({ type: 'SET_CONFIG', documentId, config });
   dispatch(addSection(documentId));
   dispatch({ type: 'ADD_DOCUMENT', documentId });
+  dispatch(recomputeDocument(documentId));
 };
 
 export const loadDocument = (documentId) => (dispatch, getState) => {

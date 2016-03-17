@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { map, pickBy, keys, propEq, assoc, prop, allPass as juxt } from 'ramda';
+import { map, pickBy, keys, propEq, assoc, prop } from 'ramda';
 import { connect } from 'react-redux';
 import units from 'recora/src/data/environment/units';
 import { setConfig } from '../actions';
@@ -22,7 +22,7 @@ class UnitsPopup extends Component {
     super();
 
     this.onSubmit = () => {
-      this.props.setConfig(this.state);
+      this.props.setConfig(this.props.documentId, this.state);
       this.props.onClose();
     };
 
@@ -84,10 +84,7 @@ export default connect(
   ({ documentConfigs }, { documentId }) => ({
     config: prop(documentId, documentConfigs || {}),
   }),
-  (dispatch, { documentId }) => ({
-    setConfig: (config) =>
-      dispatch(setConfig(documentId, config)),
-  }),
+  { setConfig },
   null,
   { pure: true }
 )(UnitsPopup);

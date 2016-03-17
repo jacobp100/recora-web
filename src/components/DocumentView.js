@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
-import { identity, equals, always, cond, contains, prop, objOf } from 'ramda';
+import { equals, always, cond, contains, prop, objOf } from 'ramda';
+import { Link } from 'react-router';
 import { connect } from 'react-redux';
 import { TweenState } from 'state-transitions';
 import Page from './page';
@@ -42,25 +43,12 @@ class DocumentView extends React.Component {
     this.closePopup = () => this.setState({ popup: null });
   }
 
-  componentWillMount() {
-    // Done this way so if you delete a document, you'll navigate back home automatically
-    this.componentWillReceiveProps(this.props);
-  }
-
-  componentWillReceiveProps({ params, documents }) {
-    const { documentId } = params;
-
-    if (!contains(documentId, documents)) {
-      this.context.router.push('/');
-    }
-  }
-
   render() {
     const { params, documents } = this.props;
     const { documentId } = params;
 
     if (!contains(documentId, documents)) {
-      return <div />;
+      return <Link to="/">Go back</Link>;
     }
 
     const { popup, popover } = this.state;
@@ -116,4 +104,11 @@ DocumentView.contextTypes = {
   router: PropTypes.object,
 };
 
-export default connect(identity)(DocumentView);
+export default connect(
+  ({ documents }) => ({
+    documents,
+  }),
+  null,
+  null,
+  { pure: true }
+)(DocumentView);
