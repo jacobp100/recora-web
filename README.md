@@ -1,8 +1,10 @@
 # Recora (Web Interface)
 
-![Recora Logo](https://github.com/jacobp100/recora-web/blob/master/design/icon-calculator-gradient.png?raw=true)
+![Recora Logo](https://github.com/jacobp100/recora-web/blob/gh-pages/design/icon-calculator-gradient.png?raw=true)
 
 Web UI for [Recora project](https://github.com/jacobp100/recora): a natural language calculator and spreadsheet replacement.
+
+[You can try it here!](http://jacobp100.github.io/recora-web/)
 
 ## Examples
 
