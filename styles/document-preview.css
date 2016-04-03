@@ -29,7 +29,7 @@
   content: '';
   width: 29px;
   height: 25px;
-  background: #000 url('/img/corner.png');
+  background: #000 url('../img/corner.png');
   background-size: 100%;
 }
 

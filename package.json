@@ -16,12 +16,13 @@
     "react-redux": "^4.4.0",
     "react-reorderable": "^0.2.3",
     "react-router": "^2.0.0",
+    "recora": "0.0.2",
     "redux": "^3.3.1",
     "redux-thunk": "^1.0.3",
     "state-transitions": "^2.1.1"
   },
   "devDependencies": {
-    "autoprefixer-core": "^6.0.1",
+    "autoprefixer": "^6.3.6",
     "babel-core": "^6.6.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-object-rest-spread": "^6.5.0",
@@ -32,9 +33,12 @@
     "eslint-config-airbnb": "^6.0.2",
     "eslint-plugin-react": "^4.1.0",
     "extract-text-webpack-plugin": "^1.0.1",
+    "file-loader": "^0.8.5",
+    "image-webpack-loader": "^1.6.3",
     "json-loader": "^0.5.2",
     "postcss-loader": "^0.8.1",
     "style-loader": "^0.13.0",
+    "url-loader": "^0.5.7",
     "webpack": "^1.12.14",
     "webpack-dev-server": "^1.14.1"
   }

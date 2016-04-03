@@ -18,7 +18,7 @@
   margin: -3px 0 -0.5px -15px;
   width: 30px;
   height: 11px;
-  background: url('/img/arrow-top.svg');
+  background: url('../img/arrow-top.svg');
   box-shadow: 0 1px 0 #eee;
 }
 

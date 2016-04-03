@@ -18,7 +18,7 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: /node_modules(?!\/recora)/,
         loader: 'babel',
       },
       {
@@ -32,10 +32,14 @@ module.exports = {
           'css-loader?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]!postcss-loader'
         ),
       },
+      {
+        test: /\.(jpe?g|png|gif|svg)$/i,
+        loader: 'url',
+      },
     ],
   },
   postcss: [
-    require('autoprefixer-core'),
+    require('autoprefixer'),
   ],
   plugins: [
     new ExtractTextPlugin('style.css', { allChunks: true }),
