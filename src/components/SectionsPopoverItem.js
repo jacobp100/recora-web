@@ -1,6 +1,6 @@
 import React from 'react';
 import { equals, cond } from 'ramda';
-import * as sectionsPopover from '../../styles/sections-popover.css';
+import { itemEdit, item, deleteIcon } from '../../styles/sections-popover.css';
 
 
 export default class SectionsPopoverItem extends React.Component {
@@ -27,7 +27,7 @@ export default class SectionsPopoverItem extends React.Component {
     if (isEditing) {
       return (
         <input
-          className={sectionsPopover.itemEdit}
+          className={itemEdit}
           value={title}
           type="text"
           onKeyDown={this.onKeyDown}
@@ -38,9 +38,9 @@ export default class SectionsPopoverItem extends React.Component {
     }
 
     return (
-      <div className={sectionsPopover.item} onDoubleClick={this.toggleEditing}>
+      <div className={item} onDoubleClick={this.toggleEditing}>
         { title || `Section ${index + 1}` }
-        <button className={sectionsPopover.deleteIcon} onClick={onDelete}>
+        <button className={deleteIcon} onClick={onDelete}>
           <span className="pe-7s-trash" />
         </button>
       </div>

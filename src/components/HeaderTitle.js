@@ -1,8 +1,8 @@
 import React from 'react';
-import * as headerTitle from '../../styles/header-title.css';
+import { title } from '../../styles/header-title.css';
 
 const HeaderTitle = ({ children }) => (
-  <div className={headerTitle.title}>
+  <div className={title}>
     { children }
   </div>
 );

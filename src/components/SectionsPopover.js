@@ -8,8 +8,8 @@ import SectionsPopoverItem from './SectionsPopoverItem';
 import {
   addSection, setSectionTitle, deleteSection, reorderSections,
 } from '../actions';
-import * as sectionsPopover from '../../styles/sections-popover.css';
-import * as base from '../../styles/base.css';
+import { sectionsContainer, details } from '../../styles/sections-popover.css';
+import { button, buttonBlock } from '../../styles/base.css';
 
 
 const getElementKeys = map(prop('key'));
@@ -41,17 +41,17 @@ const SectionsPopover = ({
   return (
     <Popover top={top} left={left} width={300} onClose={onClose}>
       <button
-        className={classnames(base.button, base.buttonBlock)}
+        className={classnames(button, buttonBlock)}
         onClick={partial(addSection, [documentId])}
       >
         Add Section
       </button>
-      <div className={sectionsPopover.sectionsContainer}>
+      <div className={sectionsContainer}>
         <ReactReorderable onDrop={onDrop}>
           { sectionElements }
         </ReactReorderable>
       </div>
-      <p className={sectionsPopover.details}>
+      <p className={details}>
         Double click a section to change the title, drag and drop to rearrange
       </p>
     </Popover>

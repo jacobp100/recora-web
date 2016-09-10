@@ -3,8 +3,11 @@ import { map, pickBy, keys, propEq, assoc, prop } from 'ramda';
 import { connect } from 'react-redux';
 import units from 'recora/src/data/environment/units';
 import { setConfig } from '../actions';
-import popup from '../../styles/popup.css';
-import base from '../../styles/base.css';
+import {
+  container, horizontal, label, dropdown, popup, title, heading, paragraph, buttonGroup,
+  button as popupButton,
+} from '../../styles/popup.css';
+import { button } from '../../styles/base.css';
 
 const visibleSiUnits = [
   ['Currency', 'currency'],
@@ -45,11 +48,11 @@ class UnitsPopup extends Component {
       ), getUnitsForType(type));
 
       return (
-        <div className={popup.horizontal}>
-          <label className={popup.label} htmlFor={`unit-${type}`}>
+        <div className={horizontal}>
+          <label className={label} htmlFor={`unit-${type}`}>
             { title }
           </label>
-          <select className={popup.dropdown} name={type} value={si[type]} onChange={this.setUnit}>
+          <select className={dropdown} name={type} value={si[type]} onChange={this.setUnit}>
             { options }
           </select>
         </div>
@@ -57,20 +60,20 @@ class UnitsPopup extends Component {
     }, visibleSiUnits);
 
     return (
-      <div className={popup.container}>
-        <div className={popup.popup}>
-          <h1 className={popup.title}>Units</h1>
+      <div className={container}>
+        <div className={popup}>
+          <h1 className={title}>Units</h1>
           { unitSettings }
-          <h2 className={popup.heading}>Currency Rates</h2>
-          <p className={popup.paragraph}>
+          <h2 className={heading}>Currency Rates</h2>
+          <p className={paragraph}>
             All currency rates will be updated to their current values unless overridden here.
           </p>
-          <button className={base.button}>Add Currency Rate</button>
-          <div className={popup.buttonGroup}>
-            <button className={popup.button} onClick={this.onSubmit}>
+          <button className={button}>Add Currency Rate</button>
+          <div className={buttonGroup}>
+            <button className={popupButton} onClick={this.onSubmit}>
               Save Changes
             </button>
-            <button className={popup.button} onClick={onClose}>
+            <button className={popupButton} onClick={onClose}>
               Cancel
             </button>
           </div>

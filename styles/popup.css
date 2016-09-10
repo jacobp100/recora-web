@@ -20,7 +20,7 @@
   background-clip: padding-box;
   font-size: 0.8rem;
   border-radius: 3px;
-	box-shadow: 0 5px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.2);
   composes: fadeIn from './base.css';
   animation-duration: 0.2s;
 }

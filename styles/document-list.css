@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   margin: 7em auto 1.5em;
-	composes: fadeIn from './base.css';
+  composes: fadeIn from './base.css';
   color: #fff;
 }
 .containerLeaving {

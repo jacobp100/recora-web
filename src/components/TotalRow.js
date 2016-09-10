@@ -1,15 +1,15 @@
 import React from 'react';
 import classnames from 'classnames';
-import * as totalRow from '../../styles/total-row.css';
+import { container, header, unloaded, total } from '../../styles/total-row.css';
 
-export default function TotalRow({ ready, total }) {
+export default function TotalRow({ ready, totalValue }) {
   return (
-    <div className={totalRow.container}>
-      <div className={totalRow.header}>
+    <div className={container}>
+      <div className={header}>
         Total
       </div>
-      <div className={classnames(totalRow.total, !ready && totalRow.unloaded)}>
-        { total }
+      <div className={classnames(total, !ready && unloaded)}>
+        { totalValue }
       </div>
     </div>
   );

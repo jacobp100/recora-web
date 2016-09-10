@@ -3,28 +3,28 @@ import { map } from 'ramda';
 import { Link } from 'react-router';
 import { TweenState } from 'state-transitions';
 import classnames from 'classnames';
-import * as documentPreview from '../../styles/document-preview.css';
-import * as base from '../../styles/base.css';
+import { container, section, page, title } from '../../styles/document-preview.css';
+import { activeOpacity } from '../../styles/base.css';
 
 const DocumentPreview = ({ documentId, title, sections, sectionTextInputs }) => {
   const sectionElements = map(sectionId => (
     <span
       key={sectionId}
-      className={documentPreview.section}
+      className={section}
       style={{ height: sectionTextInputs[sectionId].length + 1 }}
     />
   ), sections);
 
-  const linkClassName = classnames(documentPreview.container, base.activeOpacity);
+  const linkClassName = classnames(container, activeOpacity);
 
   return (
     <Link className={linkClassName} key={documentId} to={`/${documentId}`}>
       <TweenState id={`doc-${documentId}`}>
-        <span className={documentPreview.page}>
+        <span className={page}>
           { sectionElements }
         </span>
       </TweenState>
-      <span className={documentPreview.title}>
+      <span className={title}>
         { title }
       </span>
     </Link>

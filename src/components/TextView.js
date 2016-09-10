@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { setTextInputs } from '../actions';
 import * as tagNames from '../../styles/tag-names.css';
-import * as textView from '../../styles/text-view.css';
+import { container, textarea, entry, input, result } from '../../styles/text-view.css';
 
 const textToArray = pipe(
   prop('target'),
@@ -46,11 +46,11 @@ const TextViewEntry = ({ entry, text }) => {
   spanningElements = flatten(spanningElements);
 
   return (
-    <div className={textView.entry}>
-      <div className={textView.input}>
+    <div className={entry}>
+      <div className={input}>
         { spanningElements }
       </div>
-      <div className={textView.result}>
+      <div className={result}>
         { entry.resultToString }
       </div>
     </div>
@@ -82,9 +82,9 @@ const TextView = ({ documentId, sectionId, textInputs, entries, setTextInputs })
   }
 
   return (
-    <div className={textView.container}>
+    <div className={container}>
       <textarea
-        className={textView.textarea}
+        className={textarea}
         value={text}
         onChange={pipe(textToArray, partial(setTextInputs, [documentId, sectionId]))}
       />

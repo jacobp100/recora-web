@@ -2,11 +2,11 @@ import { map, prop } from 'ramda';
 import React from 'react';
 import { connect } from 'react-redux';
 import Section from './Section';
-import * as page from '../../styles/page.css';
+import { container, title } from '../../styles/page.css';
 
 const Page = ({ documentId, title, sections }) => (
-  <div className={page.container}>
-    <h1 className={page.title}>{ title }</h1>
+  <div className={container}>
+    <h1 className={title}>{ title }</h1>
     {
       map(sectionId => (
         <Section

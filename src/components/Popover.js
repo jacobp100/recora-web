@@ -1,7 +1,9 @@
 import React, { PropTypes } from 'react';
 import { AnimateInOut } from 'state-transitions';
 import classnames from 'classnames';
-import * as popover from '../../styles/popover.css';
+import {
+  popoverLeaving, container, arrowTop, content, top as popoverTop,
+} from '../../styles/popover.css';
 
 // Can't use CSSTransitionGroup as a container to all popovers
 // Switching from one popover to another hid the second one
@@ -42,15 +44,15 @@ export default class Popover extends React.Component {
     const arrowLeft = originalLeft - left;
 
     return (
-      <AnimateInOut animateOutClassName={popover.popoverLeaving}>
+      <AnimateInOut animateOutClassName={popoverLeaving}>
         <div
           ref="container"
           key={`${top}:${left}`}
-          className={classnames(popover.container, popover.top)}
+          className={classnames(container, popoverTop)}
           style={{ top, left, width }}
         >
-          <div className={popover.arrowTop} style={{ left: arrowLeft }} />
-          <div className={popover.content} width={width}>
+          <div className={arrowTop} style={{ left: arrowLeft }} />
+          <div className={content} width={width}>
             { children }
           </div>
         </div>

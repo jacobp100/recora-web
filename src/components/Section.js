@@ -3,19 +3,19 @@ import React from 'react';
 import TextView from './TextView';
 import TotalRow from './TotalRow';
 import { connect } from 'react-redux';
-import * as section from '../../styles/section.css';
+import { title, container } from '../../styles/section.css';
 
 const Section = ({ sectionId, documentId, title, entries, total }) => {
   const totalElement = total && <TotalRow ready={Boolean(entries)} total={total} />;
 
   const titleElement = title && (
-    <h2 className={section.title}>
+    <h2 className={title}>
       { title }
     </h2>
   );
 
   return (
-    <div className={section.container}>
+    <div className={container}>
       { titleElement }
       <TextView documentId={documentId} sectionId={sectionId} />
       { totalElement }

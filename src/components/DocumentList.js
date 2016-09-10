@@ -8,7 +8,7 @@ import HeaderTitle from './HeaderTitle';
 import NoDocuments from './NoDocuments';
 import DocumentPreview from './DocumentPreview';
 import { addDocument } from '../actions';
-import * as documentList from '../../styles/document-list.css';
+import { container, containerLeaving } from '../../styles/document-list.css';
 
 
 const DocumentList = ({
@@ -45,8 +45,8 @@ const DocumentList = ({
           <StackLink icon="help1" text="About" to="/" />
         </HeaderSection>
       </Header>
-      <AnimateInOut animateOutClassName={documentList.containerLeaving}>
-        <div className={documentList.container}>
+      <AnimateInOut animateOutClassName={containerLeaving}>
+        <div className={container}>
           { pagePreviews }
         </div>
       </AnimateInOut>

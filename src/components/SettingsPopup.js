@@ -2,19 +2,21 @@ import { partial, anyPass as juxt } from 'ramda';
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { deleteDocument } from '../actions';
-import popup from '../../styles/popup.css';
-import base from '../../styles/base.css';
+import {
+  container, popup, title, heading, buttonGroup, button as popupButton,
+} from '../../styles/popup.css';
+import { button } from '../../styles/base.css';
 
 const SettingsPopup = ({ documentId, deleteDocument, push, onClose }, { router }) => (
-  <div className={popup.container}>
-    <div className={popup.popup}>
-      <h1 className={popup.title}>Settings</h1>
-      <h2 className={popup.heading}>Delete Document</h2>
+  <div className={container}>
+    <div className={popup}>
+      <h1 className={title}>Settings</h1>
+      <h2 className={heading}>Delete Document</h2>
       <p>
         Permanently deletes the document, and cannot be undone.
       </p>
       <button
-        className={base.button}
+        className={button}
         onClick={juxt([
           partial(deleteDocument, [documentId]),
           () => router.push('/'),
@@ -22,8 +24,8 @@ const SettingsPopup = ({ documentId, deleteDocument, push, onClose }, { router }
       >
         Delete Document
       </button>
-      <div className={popup.buttonGroup}>
-        <button className={popup.button} onClick={partial(onClose, [documentId])}>
+      <div className={buttonGroup}>
+        <button className={popupButton} onClick={partial(onClose, [documentId])}>
           Close
         </button>
       </div>

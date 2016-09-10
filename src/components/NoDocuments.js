@@ -1,15 +1,15 @@
 import React from 'react';
 import classnames from 'classnames';
-import * as noDocuments from '../../styles/no-documents.css';
-import * as base from '../../styles/base.css';
+import { title, body, button } from '../../styles/no-documents.css';
+import { activeOpacity } from '../../styles/base.css';
 
 const NoDocuments = ({ onAddDocument }) => (
   <div>
-    <h1 className={noDocuments.title}>No Documents</h1>
-    <p className={noDocuments.body}>
+    <h1 className={title}>No Documents</h1>
+    <p className={body}>
       Click
       <button
-        className={classnames(noDocuments.button, base.activeOpacity)}
+        className={classnames(button, activeOpacity)}
         onClick={onAddDocument}
       >
         <span className="pe-7s-file" />
