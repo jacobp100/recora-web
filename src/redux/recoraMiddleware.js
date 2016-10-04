@@ -1,12 +1,12 @@
 // @flow
 import {
   update, union, map, findIndex, pullAt, isEmpty, concat, first, keys, unset, getOr, flow, zip, set,
-  forEach, difference, intersection, reject, isEqual,
+  forEach,
 } from 'lodash/fp';
-import type { SectionId, RecoraResult } from '../types';
+import Recora from 'recora';
+import type { State, SectionId, RecoraResult } from '../types';
 import { getAddedChangedRemovedSectionItems } from './util';
-import { setSectionResult } from './recora';
-import type { State } from './recora'; // eslint-disable-line
+import { setSectionResult } from '.';
 
 type ResultListenerCallback = (
   sectionId: SectionId,
@@ -19,7 +19,7 @@ type BatchImplementation = {
   addResultListener: (callback: ResultListenerCallback) => void,
 };
 
-const recora = { parse: () => 'hi' };
+const recora = new Recora();
 
 const getDefaultBatchImpl = (): BatchImplementation => {
   let resultListeners = [];

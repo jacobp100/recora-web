@@ -1,19 +1,11 @@
 // @flow
 import {
   get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
-  overEvery, uniqueId, includes,
+  overEvery, uniqueId, includes, merge,
 } from 'lodash/fp';
-import type { DocumentId, SectionId, RecoraResult } from '../types';
+import type { State, SectionId, RecoraResult } from '../types';
 
-export type State = {
-  documents: DocumentId[],
-  documentTitles: { [key:DocumentId]: string },
-  documentSections: { [key:DocumentId]: SectionId[] },
-  sectionTitles: { [key:SectionId]: string },
-  sectionTextInputs: { [key:SectionId]: string[] },
-  sectionEntries: { [key:SectionId]: RecoraResult[] },
-  sectionTotals: { [key:SectionId]: RecoraResult },
-};
+
 const defaultState: State = {
   documents: [],
   documentTitles: {},
@@ -24,6 +16,7 @@ const defaultState: State = {
   sectionTotals: {},
 };
 
+const MERGE_STATE = 'recora:MERGE_STATE';
 const ADD_DOCUMENT = 'recora:ADD_DOCUMENT';
 const SET_DOCUMENT_TITLE = 'recora:SET_DOCUMENT_TITLE';
 const ADD_SECTION = 'recora:ADD_SECTION';
@@ -83,6 +76,8 @@ const newId = (identifier, state) => {
 
 export default (action: Object, state: State = defaultState): State => {
   switch (action.type) {
+    case MERGE_STATE:
+      return merge(state, action.state);
     case ADD_DOCUMENT:
       return update('documents', concat(newId('document', state)), state);
     case SET_DOCUMENT_TITLE:
@@ -107,6 +102,12 @@ export default (action: Object, state: State = defaultState): State => {
   }
 };
 
-export const setSectionResult =
-  (sectionId: SectionId, entries: RecoraResult[], total: RecoraResult) =>
-    ({ type: SET_SECTION_RESULT, sectionId, entries, total });
+/* eslint-disable max-len */
+export const mergeState = (state: Object) =>
+  ({ type: MERGE_STATE, state });
+export const setTextInputs = (sectionId: SectionId, textInputs: string[]) =>
+  ({ type: SET_TEXT_INPUTS, sectionId, textInputs });
+export const setSectionResult = (sectionId: SectionId, entries: RecoraResult[], total: RecoraResult) =>
+  ({ type: SET_SECTION_RESULT, sectionId, entries, total });
+export { loadDocument } from './persistenceMiddleware';
+/* eslint-enable */

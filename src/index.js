@@ -1,17 +1,23 @@
+// @flow
+/* global document */
 import { render } from 'react-dom';
 import React from 'react';
 import { Router, Route, IndexRoute, hashHistory } from 'react-router';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
-import thunk from 'redux-thunk';
-import rootReducer from './store';
+import reducer, { loadDocument } from './redux';
+import persistenceMiddleware from './redux/persistenceMiddleware';
+import recoraMiddleware from './redux/recoraMiddleware';
 import DocumentList from './components/DocumentList';
 import DocumentView from './components/DocumentView';
-import { loadDocument } from './actions';
 
+const middlewares = applyMiddleware(
+  persistenceMiddleware(),
+  recoraMiddleware(),
+);
 const store = createStore(
-  rootReducer,
-  applyMiddleware(thunk)
+  reducer,
+  middlewares,
 );
 
 const onEnterDocument = (state) => Promise.resolve().then(() => {
