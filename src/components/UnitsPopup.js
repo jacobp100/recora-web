@@ -1,8 +1,9 @@
+// @flow
 import React, { Component } from 'react';
-import { map, pickBy, keys, propEq, assoc, prop } from 'ramda';
+import { map, pickBy, keys, propEq, assoc, prop } from 'lodash/fp';
 import { connect } from 'react-redux';
-import units from 'recora/src/data/environment/units';
-import { setConfig } from '../actions';
+// import units from 'recora/src/data/environment/units';
+import { setConfig } from '../redux';
 import {
   container, horizontal, label, dropdown, popup, title, heading, paragraph, buttonGroup,
   button as popupButton,

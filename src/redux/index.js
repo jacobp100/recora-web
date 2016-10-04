@@ -105,6 +105,8 @@ export default (action: Object, state: State = defaultState): State => {
 /* eslint-disable max-len */
 export const mergeState = (state: Object) =>
   ({ type: MERGE_STATE, state });
+export const addDocument = () =>
+  ({ type: ADD_DOCUMENT });
 export const setTextInputs = (sectionId: SectionId, textInputs: string[]) =>
   ({ type: SET_TEXT_INPUTS, sectionId, textInputs });
 export const setSectionResult = (sectionId: SectionId, entries: RecoraResult[], total: RecoraResult) =>

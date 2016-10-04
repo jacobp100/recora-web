@@ -1,6 +1,7 @@
+// @flow
 import {
   map, mapAccum, objOf, zip, flatten, last, append, reject, isNil, split, prop, pipe, partial,
-} from 'ramda';
+} from 'lodash/fp';
 import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';

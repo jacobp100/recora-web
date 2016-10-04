@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import { title } from '../../styles/header-title.css';
 

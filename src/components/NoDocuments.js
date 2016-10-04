@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import classnames from 'classnames';
 import { title, body, button } from '../../styles/no-documents.css';

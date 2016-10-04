@@ -1,5 +1,6 @@
+// @flow
 import React from 'react';
-import { map, addIndex, prop, partial } from 'ramda';
+import { map, addIndex, prop, partial } from 'lodash/fp';
 import { connect } from 'react-redux';
 import ReactReorderable from 'react-reorderable';
 import classnames from 'classnames';
@@ -7,7 +8,7 @@ import Popover from './Popover';
 import SectionsPopoverItem from './SectionsPopoverItem';
 import {
   addSection, setSectionTitle, deleteSection, reorderSections,
-} from '../actions';
+} from '../redux';
 import { sectionsContainer, details } from '../../styles/sections-popover.css';
 import { button, buttonBlock } from '../../styles/base.css';
 

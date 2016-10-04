@@ -1,8 +1,9 @@
-import { prop } from 'ramda';
+// @flow
+import { get } from 'lodash/fp';
 import React from 'react';
+import { connect } from 'react-redux';
 import TextView from './TextView';
 import TotalRow from './TotalRow';
-import { connect } from 'react-redux';
 import { title, container } from '../../styles/section.css';
 
 const Section = ({ sectionId, documentId, title, entries, total }) => {
@@ -25,9 +26,9 @@ const Section = ({ sectionId, documentId, title, entries, total }) => {
 
 export default connect(
   ({ sectionTitles, sectionEntries, sectionTotals }, { sectionId }) => ({
-    title: prop(sectionId, sectionTitles || {}),
-    entries: prop(sectionId, sectionEntries || {}),
-    totals: prop(sectionId, sectionTotals || {}),
+    title: get(sectionId, sectionTitles),
+    entries: get(sectionId, sectionEntries),
+    totals: get(sectionId, sectionTotals),
   }),
   null,
   null,

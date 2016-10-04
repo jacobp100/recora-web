@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import classnames from 'classnames';
 import { container, section, left, right, center } from '../../styles/header.css';

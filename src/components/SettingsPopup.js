@@ -1,4 +1,5 @@
-import { partial, anyPass as juxt } from 'ramda';
+// @flow
+import { partial, anyPass as juxt } from 'lodash/fp';
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { deleteDocument } from '../actions';

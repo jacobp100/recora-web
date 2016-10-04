@@ -1,5 +1,6 @@
+// @flow
 import React from 'react';
-import { map } from 'ramda';
+import { map } from 'lodash/fp';
 import { connect } from 'react-redux';
 import { AnimateInOut } from 'state-transitions';
 import { Header, HeaderSection } from './Header';
@@ -7,7 +8,7 @@ import { StackLink, HorizontalButton } from './HeaderButton';
 import HeaderTitle from './HeaderTitle';
 import NoDocuments from './NoDocuments';
 import DocumentPreview from './DocumentPreview';
-import { addDocument } from '../actions';
+import { addDocument } from '../redux';
 import { container, containerLeaving } from '../../styles/document-list.css';
 
 

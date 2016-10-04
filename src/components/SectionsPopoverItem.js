@@ -1,5 +1,6 @@
+// @flow
 import React from 'react';
-import { equals, cond } from 'ramda';
+import { equals, cond } from 'lodash/fp';
 import { itemEdit, item, deleteIcon } from '../../styles/sections-popover.css';
 
 

@@ -1,5 +1,6 @@
+// @flow
 import React, { PropTypes } from 'react';
-import { map } from 'ramda';
+import { map } from 'lodash/fp';
 import { Link } from 'react-router';
 import { TweenState } from 'state-transitions';
 import classnames from 'classnames';
@@ -25,7 +26,7 @@ const DocumentPreview = ({ documentId, title, sections, sectionTextInputs }) => 
         </span>
       </TweenState>
       <span className={title}>
-        { title }
+        {title}
       </span>
     </Link>
   );

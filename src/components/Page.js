@@ -1,4 +1,5 @@
-import { map, prop } from 'ramda';
+// @flow
+import { map, get } from 'lodash/fp';
 import React from 'react';
 import { connect } from 'react-redux';
 import Section from './Section';
@@ -21,8 +22,8 @@ const Page = ({ documentId, title, sections }) => (
 
 export default connect(
   ({ documentTitles, documentSections }, { documentId }) => ({
-    title: prop(documentId, documentTitles || {}),
-    sections: prop(documentId, documentSections || {}),
+    title: get(documentId, documentTitles),
+    sections: get(documentId, documentSections),
   }),
   null,
   null,

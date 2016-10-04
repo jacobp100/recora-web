@@ -1,3 +1,5 @@
+// @flow
+/* global document */
 import React, { PropTypes } from 'react';
 import { AnimateInOut } from 'state-transitions';
 import classnames from 'classnames';
@@ -9,14 +11,18 @@ import {
 // Switching from one popover to another hid the second one
 // Even doing each popover in its own CSSTransitionGroup did the same
 export default class Popover extends React.Component {
-  constructor() {
-    super();
-    this.handleDocumentClick = (e) => {
-      if (!this.refs.container.contains(e.target)) {
-        this.props.onClose();
-      }
-    };
+  static propTypes = {
+    top: PropTypes.number,
+    left: PropTypes.number,
+    width: PropTypes.number,
+    popoverMargin: PropTypes.number,
+    onClose: PropTypes.func,
   }
+
+  static defaultProps = {
+    popoverMargin: 12,
+  }
+
   componentWillMount() {
     document.addEventListener('click', this.handleDocumentClick);
   }
@@ -24,6 +30,14 @@ export default class Popover extends React.Component {
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDocumentClick);
   }
+
+  handleDocumentClick = (e: Object) => {
+    if (this.container && !this.container.contains(e.target)) {
+      this.props.onClose();
+    }
+  };
+
+  container = null;
 
   render() {
     const { top, width, popoverMargin, children } = this.props;
@@ -35,10 +49,10 @@ export default class Popover extends React.Component {
 
     if (left > maxLeft) {
       left = maxLeft;
-    } else if (left < popoverMargin + width / 2) {
+    } else if (left < popoverMargin + (width / 2)) {
       left = popoverMargin;
     } else {
-      left = left - width / 2;
+      left = left - (width / 2); // eslint-disable-line
     }
 
     const arrowLeft = originalLeft - left;
@@ -46,7 +60,7 @@ export default class Popover extends React.Component {
     return (
       <AnimateInOut animateOutClassName={popoverLeaving}>
         <div
-          ref="container"
+          ref={container => { this.container = container; }}
           key={`${top}:${left}`}
           className={classnames(container, popoverTop)}
           style={{ top, left, width }}
@@ -60,13 +74,3 @@ export default class Popover extends React.Component {
     );
   }
 }
-Popover.propTypes = {
-  top: PropTypes.number,
-  left: PropTypes.number,
-  width: PropTypes.number,
-  popoverMargin: PropTypes.number,
-  onClose: PropTypes.func,
-};
-Popover.defaultProps = {
-  popoverMargin: 12,
-};

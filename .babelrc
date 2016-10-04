@@ -4,6 +4,7 @@
     "transform-flow-strip-types",
     "transform-object-rest-spread",
     "transform-class-properties",
-    "transform-exponentiation-operator"
+    "transform-exponentiation-operator",
+    "transform-async-to-generator"
   ]
 }
