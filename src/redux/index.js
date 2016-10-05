@@ -26,6 +26,22 @@ const SET_SECTION_RESULT = 'recora:SET_SECTION_RESULT';
 const DELETE_DOCUMENT = 'recora:DELETE_DOCUMENT';
 const DELETE_SECTION = 'recora:DELETE_SECTION';
 
+const getExistingIds = flow(
+  overEvery([
+    get('documents'),
+    flow(get('documentSections'), values, flatten),
+  ]),
+  flatten,
+);
+const newId = (identifier, state) => {
+  const existingIds = getExistingIds(state);
+  let id;
+  do {
+    id = uniqueId(`${identifier}-`);
+  } while (includes(id, existingIds));
+  return id;
+};
+
 
 const removeIdWithinKeys = curry((keysToUpdate, idToRemove, state) => reduce(
   (state, keyToUpdate) => unset([keyToUpdate, idToRemove], state),
@@ -58,32 +74,31 @@ const doDeleteDocument = curry((documentId, state) => flow(
   removeIdWithinKeys(documentKeys, documentId)
 )(state));
 
-const getExistingIds = flow(
-  overEvery([
-    get('documents'),
-    flow(get('documentSections'), values, flatten),
-  ]),
-  flatten,
-);
-const newId = (identifier, state) => {
-  const existingIds = getExistingIds(state);
-  let id;
-  do {
-    id = uniqueId(`${identifier}-`);
-  } while (includes(id, existingIds));
-};
+const doAddSection = curry((documentId, state) => {
+  const sectionId = newId('section');
+  return flow(
+    update('sections', concat(newId('section', state))),
+    update(['documentSections', documentId], value => (value ? concat(value, sectionId) : [sectionId]))
+  )(state);
+});
 
 
-export default (action: Object, state: State = defaultState): State => {
+export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
     case MERGE_STATE:
       return merge(state, action.state);
-    case ADD_DOCUMENT:
-      return update('documents', concat(newId('document', state)), state);
+    case ADD_DOCUMENT: {
+      const id = newId('document', state);
+      return flow(
+        update('documents', concat(id)),
+        set(['documentTitles', id], 'New Document'),
+        doAddSection(id)
+      )(state);
+    }
     case SET_DOCUMENT_TITLE:
       return set(['documentTitles', action.documentId], action.title, state);
     case ADD_SECTION:
-      return update('sections', concat(newId('section', state)), state);
+      return doAddSection(action.documentId);
     case SET_SECTION_TITLE:
       return set(['sectionTitles', action.sectionId], action.title, state);
     case SET_TEXT_INPUTS:
@@ -107,8 +122,8 @@ export const mergeState = (state: Object) =>
   ({ type: MERGE_STATE, state });
 export const addDocument = () =>
   ({ type: ADD_DOCUMENT });
-export const addSection = () =>
-  ({ type: ADD_SECTION });
+export const addSection = (documentId: DocumentId) =>
+  ({ type: ADD_SECTION, documentId });
 export const setSectionTitle = (sectionId: SectionId, title: string) =>
   ({ type: SET_SECTION_TITLE, sectionId, title });
 export const setTextInputs = (sectionId: SectionId, textInputs: string[]) =>

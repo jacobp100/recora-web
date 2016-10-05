@@ -1,7 +1,7 @@
 // @flow
 import {
   reduce, concat, map, fromPairs, isEmpty, isEqual, curry, over, constant, partial, flow, assign,
-  pickBy, omitBy, isNull, keys, toPairs, mapValues, zip, get, pick,
+  pickBy, omitBy, keys, toPairs, mapValues, zip, get, pick, mapKeys, isNil,
 } from 'lodash/fp';
 import { debounce } from 'lodash';
 import { getAddedChangedRemovedSectionItems, getPromiseStorage } from './util';
@@ -31,42 +31,53 @@ const proxyKeys = [
     storagePrefix: sectionPreviewPrefix,
     query: 'sectionResults',
     transform: (state, sectionId) => ({
-      entries: map('pretty', state.sectionResults[sectionId]),
-      totals: map('pretty', state.sectionTotals[sectionId]),
+      resultTexts: map('pretty', state.sectionResults[sectionId]),
+      totalTexts: map('pretty', state.sectionTotals[sectionId]),
     }),
   },
 ];
 
-const getSectionStorageKey = curry((storagePrefix, sectionId) => `${storagePrefix}-${sectionId}`);
+const getSectionStorageKey =
+  curry((storagePrefix, sectionId) => `${storagePrefix}-${sectionId}`);
+const getSectionFromStorageKey =
+  curry((storagePrefix, storageKey) => storageKey.substring(storagePrefix.length + 1));
 
 
 const getPatchForStates = (nextState, previousState) => {
   const simplePatch = flow(
-    map(key => (!isEqual(previousState[key], nextState[key]) ? [key, nextState[key]] : null)),
+    map(key => [key, !isEqual(previousState[key], nextState[key]) ? nextState[key] : null]),
     fromPairs,
+    omitBy(isNil)
   )(simpleKeys);
 
-  const proxyPatch = reduce((pairsToSet, { query, transform, storagePrefix }) => {
+  const proxyPatch = reduce((proxyPatch, { query, transform, storagePrefix }) => {
     const getStorageKey = getSectionStorageKey(storagePrefix);
     const { added, changed, removed } =
       getAddedChangedRemovedSectionItems(nextState[query], previousState[query]);
 
-    const removePatch = map(over([
-      getStorageKey,
-      constant(null),
-    ]), removed);
+    const removePatch = flow(
+      map(over([getStorageKey, constant(null)])),
+      fromPairs
+    )(removed);
 
     const sectionsToPersist = concat(added, changed);
-    const setPatch = map(over([
-      getStorageKey,
-      partial(transform, [nextState]),
-    ]), sectionsToPersist);
+    const setPatch = flow(
+      map(over([getStorageKey, partial(transform, [nextState])])),
+      fromPairs,
+    )(sectionsToPersist);
 
-    return assign(setPatch, removePatch);
+    const newPatch = assign(setPatch, removePatch);
+    return assign(proxyPatch, newPatch);
   }, {}, proxyKeys);
 
   return assign(simplePatch, proxyPatch);
 };
+
+const storagePairsToMap = flow(
+  fromPairs,
+  omitBy(isNil),
+  mapValues(JSON.parse)
+);
 
 export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getState, dispatch }) => {
   let storagePromise = Promise.resolve();
@@ -80,8 +91,8 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
     try {
       if (isEmpty(storagePatch)) return;
 
-      const keysToRemove = flow(pickBy(isNull), keys)(storagePatch);
-      const pairsToSet = flow(omitBy(isNull), mapValues(JSON.stringify), toPairs)(storagePatch);
+      const keysToRemove = flow(pickBy(isNil), keys)(storagePatch);
+      const pairsToSet = flow(omitBy(isNil), mapValues(JSON.stringify), toPairs)(storagePatch);
 
       if (keysToRemove) await storage.multiRemove(keysToRemove);
       if (pairsToSet) await storage.multiSet(pairsToSet);
@@ -93,10 +104,10 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
   };
 
   const doLoadSimpleState = async () => {
-    const values = storage.multiGet(simpleKeys);
+    const values = await storage.multiGet(simpleKeys);
     const patch = flow(
       zip(simpleKeys),
-      omitBy(isNull)
+      storagePairsToMap
     )(values);
     if (!isEmpty(patch)) dispatch(mergeState(patch));
   };
@@ -111,30 +122,30 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
     const allKeys = concat(sectionStorageKeys, sectionPreviewStorageKeys);
     const allValues = await storage.multiGet(allKeys);
 
-    const toSectionIdMap = flow(
-      zip(sectionIds),
-      fromPairs
-    );
+    const allMap = flow(
+      zip(allKeys),
+      storagePairsToMap
+    )(allValues);
 
     const sectionTextInputs = flow(
       pick(sectionStorageKeys),
-      toSectionIdMap
-    )(allValues);
+      mapKeys(getSectionFromStorageKey(sectionTextInputStoragePrefix))
+    )(allMap);
 
-    const toRecoraResult = pretty => ({ pretty });
-    const { entries: sectionResults, totals: sectionTotals } = flow(
+    const textToRecoraResult = pretty => ({ pretty });
+    const { resultTexts: sectionResults, totalTexts: sectionTotals } = flow(
       pick(sectionPreviewStorageKeys),
-      toSectionIdMap,
-      mapValues(map(toRecoraResult))
-    )(allValues);
+      mapKeys(getSectionFromStorageKey(sectionPreviewPrefix)),
+      mapValues(map(textToRecoraResult))
+    )(allMap);
 
-    const patch = { sectionTextInputs, sectionResults, sectionTotals };
-    dispatch(mergeState(patch));
+    const patch = omitBy(isNil, { sectionTextInputs, sectionResults, sectionTotals });
+    if (!isEmpty(patch)) dispatch(mergeState(patch));
   };
 
   const queuePatch = debounce(() => {
     queueStorageOperation(doSave);
-  }, 2000, { maxWait: 5000 });
+  }, 1000, { maxWait: 2000 });
 
   const applyPatch = patch => {
     if (!isEmpty(patch)) {

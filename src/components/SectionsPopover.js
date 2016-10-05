@@ -64,7 +64,10 @@ export default connect(
     sections: prop(documentId, documentSections || {}),
     sectionTitles,
   }),
-  { addSection, setSectionTitle, deleteSection, reorderSections },
-  null,
-  { pure: true }
+  (dispatch, { documentId }) => ({
+    addSection: () => dispatch(addSection(documentId)),
+    setSectionTitle: (sectionId, title) => dispatch(setSectionTitle(sectionId, title)),
+    deleteSection: (sectionId) => dispatch(deleteSection(sectionId)),
+    reorderSections: () => dispatch(reorderSections()),
+  })
 )(SectionsPopover);

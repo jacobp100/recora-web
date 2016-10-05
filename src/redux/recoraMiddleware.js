@@ -35,6 +35,7 @@ const getDefaultBatchImpl = (): BatchImplementation => {
     let previous = getOr([], sectionId, previousResults).slice();
 
     const entries = map(input => {
+      // FIXME: text, not input
       const previousEntryIndex = findIndex({ input }, previous);
 
       if (previousEntryIndex !== -1) {
@@ -58,29 +59,24 @@ const getDefaultBatchImpl = (): BatchImplementation => {
     forEach(resultListener => resultListener(sectionId, entries, total), resultListeners);
 
     idleCallback = !isEmpty(queuedInputs)
-      ? global.requestIdleCallback(performSectionComputation)
+      ? global.requestAnimationFrame(performSectionComputation)
       : null;
   };
 
   const queueSection = (sectionId, inputs) => {
     queuedInputs = update(
       sectionId,
-      existingInputs => (existingInputs ? union(existingInputs, inputs) : [inputs]),
+      existingInputs => (existingInputs ? union(existingInputs, inputs) : inputs),
       queuedInputs
     );
 
     if (idleCallback === null) {
-      idleCallback = global.requestIdleCallback(performSectionComputation);
+      idleCallback = global.requestAnimationFrame(performSectionComputation);
     }
   };
 
   const unqueueSection = (sectionId) => {
     queuedInputs = unset(sectionId, queuedInputs);
-
-    if (idleCallback !== null && isEmpty(queuedInputs)) {
-      global.cancelIdleCallback(idleCallback);
-      idleCallback = null;
-    }
   };
 
   return {

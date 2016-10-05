@@ -1,5 +1,6 @@
 // @flow
 /* global document */
+import 'babel-regenerator-runtime';
 import { render } from 'react-dom';
 import React from 'react';
 import { Router, Route, IndexRoute, hashHistory } from 'react-router';

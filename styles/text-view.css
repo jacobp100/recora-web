@@ -12,7 +12,7 @@
   font-weight: 200;
   white-space: pre-wrap;
 }
-.result {
+.output {
   flex: 1 0 0;
   white-space: nowrap;
   overflow: hidden;

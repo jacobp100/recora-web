@@ -9,7 +9,7 @@ const HeaderTitle = ({ children }: Object) => (
 );
 
 HeaderTitle.propTypes = {
-  children: PropTypes.arrayOf(PropTypes.node),
+  children: PropTypes.string,
 };
 
 export default HeaderTitle;
