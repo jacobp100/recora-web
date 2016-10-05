@@ -41,9 +41,9 @@ const TextViewEntry = ({ result, text }) => {
 
     const newSpanningElements = compact([
       start !== index
-        ? <SpanningElement key={preKey} text={text.substring(index, start)} />
+        ? <SpanningElement key={preKey}>{text.substring(index, start)}</SpanningElement>
         : null,
-      <SpanningElement key={key} text={text.substring(start, end)} type={type} />,
+      <SpanningElement key={key} type={type}>{text.substring(start, end)}</SpanningElement>,
     ]);
 
     return {

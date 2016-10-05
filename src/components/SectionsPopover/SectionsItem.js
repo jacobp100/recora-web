@@ -6,7 +6,7 @@ import classnames from 'classnames';
 import { flow, get, equals, cond } from 'lodash/fp';
 import { DragSource, DropTarget } from 'react-dnd';
 import { setSectionTitle, deleteSection } from '../../redux';
-import { itemEdit, item, dragging, deleteIcon } from '../../../styles/sections-popover.css';
+import { itemEdit, item, target, dragging, deleteIcon } from '../../../styles/sections-popover.css';
 
 
 const TITLE_TYPE = 'title';
@@ -59,7 +59,9 @@ class SectionsPopoverItem extends Component {
   toggleEditing = () => { this.setState({ isEditing: !this.state.isEditing }); };
 
   render() {
-    const { index, onDelete, isDragging, connectDragSource, connectDropTarget } = this.props;
+    const {
+      sectionIndex, onDelete, canDrop, isDragging, connectDragSource, connectDropTarget,
+    } = this.props;
     const { title, isEditing } = this.state;
 
     if (isEditing) {
@@ -76,8 +78,11 @@ class SectionsPopoverItem extends Component {
     }
 
     return connectDragSource(connectDropTarget(
-      <div className={classnames(item, isDragging && dragging)} onDoubleClick={this.toggleEditing}>
-        {title || `Section ${index + 1}`}
+      <div
+        className={classnames(item, canDrop && target, isDragging && dragging)}
+        onDoubleClick={this.toggleEditing}
+      >
+        {title || `Section ${sectionIndex + 1}`}
         <button className={deleteIcon} onClick={onDelete}>
           <span className="pe-7s-trash" />
         </button>
@@ -88,8 +93,10 @@ class SectionsPopoverItem extends Component {
 
 /* eslint-disable new-cap */
 export default flow(
-  DropTarget(TITLE_TYPE, cardTarget, connect => ({
+  DropTarget(TITLE_TYPE, cardTarget, (connect, monitor) => ({
     connectDropTarget: connect.dropTarget(),
+    hasDrag: monitor.isOver(),
+    canDrop: monitor.canDrop(),
   })),
   DragSource(TITLE_TYPE, cardSource, (connect, monitor) => ({
     connectDragSource: connect.dragSource(),

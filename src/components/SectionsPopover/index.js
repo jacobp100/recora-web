@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import Popover from '../Popover';
-import PopoverContainer from './PopoverContainer';
+import SectionsContainer from './SectionsContainer';
 import { addSection } from '../../redux';
 import { sectionsContainer, details } from '../../../styles/sections-popover.css';
 import { button, buttonBlock } from '../../../styles/base.css';
@@ -30,7 +30,7 @@ const SectionsPopover = ({
       Add Section
     </button>
     <div className={sectionsContainer}>
-      <PopoverContainer documentId={documentId} />
+      <SectionsContainer documentId={documentId} />
     </div>
     <p className={details}>
       Double click a section to change the title, drag and drop to rearrange

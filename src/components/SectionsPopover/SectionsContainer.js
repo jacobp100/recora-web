@@ -3,8 +3,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import { map, getOr, propertyOf, range, flow, pullAt, curry } from 'lodash/fp';
-import PopoverItem from './PopoverItem';
+import { map, getOr, range, flow, pullAt, curry } from 'lodash/fp';
+import SectionsItem from './SectionsItem';
 import { reorderSections } from '../../redux';
 
 const insertAt = curry((index, value, array) => (
@@ -41,13 +41,12 @@ class PopoverContainer extends Component {
     const { sections } = this.props;
     const { order } = this.state;
 
-    const reorderedSections = map(propertyOf(sections), order);
-
     const items = map(index => (
-      <PopoverItem
+      <SectionsItem
         key={order[index]}
         index={index}
-        text={reorderedSections[index]}
+        sectionIndex={order[index]}
+        sectionId={sections[order[index]]}
         reorder={this.reorder}
       />
     ), range(0, sections.length));

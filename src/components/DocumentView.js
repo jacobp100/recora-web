@@ -50,10 +50,10 @@ export default class DocumentView extends Component {
 
   renderPopup = cond([
     [equals(SETTINGS), () => (
-      <SettingsPopup documentId={this.props.documentId} onClose={this.closePopup} />
+      <SettingsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
     )],
     [equals(UNITS), () => (
-      <UnitsPopup documentId={this.props.documentId} onClose={this.closePopup} />
+      <UnitsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
     )],
     [always(true), always(null)],
   ]);
@@ -61,7 +61,7 @@ export default class DocumentView extends Component {
   renderPopover = cond([
     [matchesProperty('type', SECTIONS), popover => (
       <SectionsPopover
-        documentId={this.props.documentId}
+        documentId={this.props.params.documentId}
         top={popover.top}
         left={popover.left}
         onClose={this.closePopover}

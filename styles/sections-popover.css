@@ -6,13 +6,17 @@
 .item {
   position: relative;
   padding: 0.5em;
+  border: 1px solid transparent;
   border-radius: 2px;
 }
-.item:hover {
+.item:hover:not(.target) {
   background: #ccc;
 }
 .item.dragging {
-  /* position: absolute; */
+  color: transparent;
+  border-color: #aaa;
+  border-style: dashed;
+  border-radius: 4px;
   cursor: move;
 }
 
@@ -42,7 +46,7 @@
   background: #333;
   color: white;
 }
-:global(.react-drag-dragging) .deleteIcon {
+.item.dragging .deleteIcon {
   display: none;
 }
 

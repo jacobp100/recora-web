@@ -77,10 +77,11 @@ const doDeleteDocument = curry((documentId, state) => flow(
 
 const doAddSection = curry((documentId, state) => {
   const sectionId = newId('section');
-  return flow(
-    update('sections', concat(newId('section', state))),
-    update(['documentSections', documentId], value => (value ? concat(value, sectionId) : [sectionId]))
-  )(state);
+  return update(
+    ['documentSections', documentId],
+    existingSections => (existingSections ? concat(existingSections, sectionId) : [sectionId]),
+    state
+  );
 });
 
 
@@ -99,7 +100,7 @@ export default (state: State = defaultState, action: Object): State => {
     case SET_DOCUMENT_TITLE:
       return set(['documentTitles', action.documentId], action.title, state);
     case ADD_SECTION:
-      return doAddSection(action.documentId);
+      return doAddSection(action.documentId, state);
     case SET_SECTION_TITLE:
       return set(['sectionTitles', action.sectionId], action.title, state);
     case SET_TEXT_INPUTS:
