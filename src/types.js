@@ -9,6 +9,6 @@ export type State = {
   documentSections: { [key:DocumentId]: SectionId[] },
   sectionTitles: { [key:SectionId]: string },
   sectionTextInputs: { [key:SectionId]: string[] },
-  sectionEntries: { [key:SectionId]: RecoraResult[] },
+  sectionResults: { [key:SectionId]: RecoraResult[] },
   sectionTotals: { [key:SectionId]: RecoraResult },
 };

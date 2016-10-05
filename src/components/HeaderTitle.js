@@ -1,11 +1,15 @@
 // @flow
-import React from 'react';
+import React, { PropTypes } from 'react';
 import { title } from '../../styles/header-title.css';
 
-const HeaderTitle = ({ children }) => (
+const HeaderTitle = ({ children }: Object) => (
   <div className={title}>
-    { children }
+    {children}
   </div>
 );
+
+HeaderTitle.propTypes = {
+  children: PropTypes.arrayOf(PropTypes.node),
+};
 
 export default HeaderTitle;

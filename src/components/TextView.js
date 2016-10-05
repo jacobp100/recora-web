@@ -1,70 +1,70 @@
 // @flow
-import {
-  map, mapAccum, objOf, zip, flatten, last, append, reject, isNil, split, prop, pipe, partial,
-} from 'lodash/fp';
+import { map, reduce, zip, last, concat, compact, get } from 'lodash/fp';
 import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
-import { setTextInputs } from '../actions';
+import { setTextInputs } from '../redux';
 import * as tagNames from '../../styles/tag-names.css';
 import { container, textarea, entry, input, result } from '../../styles/text-view.css';
 
-const textToArray = pipe(
-  prop('target'),
-  prop('value'),
-  split('\n')
-);
 
-const SpanningElement = ({ entry, start = 0, end = Infinity, type }) => (
+const SpanningElement = ({ result, start = 0, end = Infinity, type }) => (
   <span className={classnames('tag', tagNames[type])}>
-    { entry.text.substring(start, end) }
+    {result.text.substring(start, end)}
   </span>
 );
 
-const TextViewEntry = ({ entry, text }) => {
+const getSpanningElements = reduce(({ index, spanningElements }, { start, end, type }) => {
+  const preKey = `pre-${start}`;
+  const key = `${start}-${end}`;
+
+  const newSpanningElements = compact([
+    start !== index
+      ? <SpanningElement key={preKey} result={result} start={index} end={start} />
+      : null,
+    <SpanningElement key={key} result={result} start={start} end={end} type={type} />,
+  ]);
+
+  return {
+    index: end,
+    spanningElements: spanningElements.concat(newSpanningElements),
+  };
+}, {
+  index: 0,
+  elements: 0,
+});
+
+const TextViewEntry = ({ result, text }) => {
   // Recora strips out some noop tags from the start, middle and end,
   // but we need to actually show that text.
-  let entryTags = entry.tags || [{ start: 0, end: entry.text.length }];
+  let resultTags = result.tags || [{ start: 0, end: result.text.length }];
 
-  const lastEntryTag = last(entryTags);
+  const lastEntryTag = last(resultTags);
   if (lastEntryTag.end !== text.length) {
-    entryTags = append({ start: lastEntryTag.end, end: text.length }, entryTags);
+    resultTags = concat(resultTags, { start: lastEntryTag.end, end: text.length });
   }
 
-  let spanningElements = mapAccum((index, { start, end, type }) => {
-    const preKey = `pre-${start}`;
-    const key = `${start}-${end}`;
-
-    const elements = reject(isNil, [
-      start !== index
-        ? <SpanningElement key={preKey} entry={entry} start={index} end={start} />
-        : null,
-      <SpanningElement key={key} entry={entry} start={start} end={end} type={type} />,
-    ]);
-    return [end, elements];
-  }, 0, entryTags)[1];
-
-  spanningElements = flatten(spanningElements);
+  const { spanningElements } = getSpanningElements(resultTags);
 
   return (
     <div className={entry}>
       <div className={input}>
-        { spanningElements }
+        {spanningElements}
       </div>
       <div className={result}>
-        { entry.resultToString }
+        {result.pretty}
       </div>
     </div>
   );
 };
 
-const TextView = ({ documentId, sectionId, textInputs, entries, setTextInputs }) => {
+const TextView = ({ textInputs, results, setTextInputs }) => {
   const text = textInputs.join('\n');
-  const entriesWithText = entries || map(objOf('text'), textInputs);
+  const resultsWithText = results || map(text => ({ text }), textInputs);
 
-  let values = map(([entryText, entry]) => (
-    <TextViewEntry text={entryText} entry={entry} />
-  ), zip(textInputs, entriesWithText));
+  let values = map(([entryText, result]) => (
+    <TextViewEntry text={entryText} result={result} />
+  ), zip(textInputs, resultsWithText));
   // Note above, if entries isn't ready yet, fake it with the text inputs (which will be ready)
   // This will mean that we'll see black text without results until entries is fully loaded, and
   // then it will adjust afterwards (without the page reflowing).
@@ -87,20 +87,19 @@ const TextView = ({ documentId, sectionId, textInputs, entries, setTextInputs })
       <textarea
         className={textarea}
         value={text}
-        onChange={pipe(textToArray, partial(setTextInputs, [documentId, sectionId]))}
+        onChange={setTextInputs}
       />
-      { values }
+      {values}
     </div>
   );
 };
 
 export default connect(
-  ({ sectionTextInputs, sectionEntries }, { sectionId }) => ({
-    sectionId,
-    textInputs: prop(sectionId, sectionTextInputs || {}),
-    entries: prop(sectionId, sectionEntries || {}),
+  ({ sectionTextInputs, sectionResults }, { sectionId }) => ({
+    textInputs: get(sectionId, sectionTextInputs),
+    results: get(sectionId, sectionResults),
   }),
-  { setTextInputs },
-  null,
-  { pure: true }
+  (dispatch, { sectionId }) => ({
+    setTextInputs: e => dispatch(setTextInputs(sectionId, e.target.value.split('\n'))),
+  })
 )(TextView);

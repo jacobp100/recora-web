@@ -29,9 +29,9 @@ const proxyKeys = [
   },
   {
     storagePrefix: sectionPreviewPrefix,
-    query: 'sectionEntries',
+    query: 'sectionResults',
     transform: (state, sectionId) => ({
-      entries: map('pretty', state.sectionEntries[sectionId]),
+      entries: map('pretty', state.sectionResults[sectionId]),
       totals: map('pretty', state.sectionTotals[sectionId]),
     }),
   },
@@ -122,13 +122,13 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
     )(allValues);
 
     const toRecoraResult = pretty => ({ pretty });
-    const { entries: sectionEntries, totals: sectionTotals } = flow(
+    const { entries: sectionResults, totals: sectionTotals } = flow(
       pick(sectionPreviewStorageKeys),
       toSectionIdMap,
       mapValues(map(toRecoraResult))
     )(allValues);
 
-    const patch = { sectionTextInputs, sectionEntries, sectionTotals };
+    const patch = { sectionTextInputs, sectionResults, sectionTotals };
     dispatch(mergeState(patch));
   };
 

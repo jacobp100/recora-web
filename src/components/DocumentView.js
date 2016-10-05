@@ -1,8 +1,6 @@
 // @flow
-import React, { PropTypes } from 'react';
-import { equals, always, cond, includes, matchesProperty } from 'lodash/fp';
-import { Link } from 'react-router';
-import { connect } from 'react-redux';
+import React, { Component, PropTypes } from 'react';
+import { equals, always, cond, matchesProperty } from 'lodash/fp';
 import { TweenState } from 'state-transitions';
 import Page from './Page';
 import { Header, HeaderSection } from './Header';
@@ -11,13 +9,19 @@ import SettingsPopup from './SettingsPopup';
 import UnitsPopup from './UnitsPopup';
 import SectionsPopover from './SectionsPopover';
 
+type Popover = { type: string, top: number, left: number };
+
 const UNITS = 'units';
 const SETTINGS = 'settings';
 const SECTIONS = 'sections';
 
+export default class DocumentView extends Component {
+  static propTypes = {
+    params: PropTypes.shape({
+      documentId: PropTypes.string.isRequired,
+    }).isRequired,
+  }
 
-type Popover = { type: string, top: number, left: number };
-class DocumentView extends React.Component {
   state: {
     popup: ?string,
     popover: ?Popover,
@@ -26,7 +30,7 @@ class DocumentView extends React.Component {
     popover: null,
   }
 
-  setPopover = (type, e) => {
+  setPopover = (type: string, e: Object) => {
     const { popover } = this.state;
     if (popover && popover.type === type) {
       this.setState({ popover: null });
@@ -41,7 +45,7 @@ class DocumentView extends React.Component {
   toggleSettingsPopup = () => this.setState({ popup: SETTINGS })
   closePopup = () => this.setState({ popup: null })
 
-  toggleSectionsPopover = (e) => this.setPopover(SECTIONS, e)
+  toggleSectionsPopover = (e: Object) => this.setPopover(SECTIONS, e)
   closePopover = () => this.setState({ popover: null })
 
   renderPopup = cond([
@@ -67,14 +71,9 @@ class DocumentView extends React.Component {
   ]);
 
   render() {
-    const { params, documents } = this.props;
-    const { documentId } = params;
-
-    if (!includes(documentId, documents)) {
-      return <Link to="/">Go back</Link>;
-    }
-
     const { popup, popover } = this.state;
+    const { params } = this.props;
+    const { documentId } = params;
 
     return (
       <div>
@@ -101,15 +100,3 @@ class DocumentView extends React.Component {
     );
   }
 }
-DocumentView.contextTypes = {
-  router: PropTypes.object,
-};
-
-export default connect(
-  ({ documents }) => ({
-    documents,
-  }),
-  null,
-  null,
-  { pure: true }
-)(DocumentView);

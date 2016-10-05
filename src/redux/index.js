@@ -3,7 +3,7 @@ import {
   get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
   overEvery, uniqueId, includes, merge,
 } from 'lodash/fp';
-import type { State, SectionId, RecoraResult } from '../types';
+import type { State, SectionId, DocumentId, RecoraResult } from '../types';
 
 
 const defaultState: State = {
@@ -12,7 +12,7 @@ const defaultState: State = {
   documentSections: {},
   sectionTitles: {},
   sectionTextInputs: {},
-  sectionEntries: {},
+  sectionResults: {},
   sectionTotals: {},
 };
 
@@ -36,11 +36,11 @@ const removeIdWithinKeys = curry((keysToUpdate, idToRemove, state) => reduce(
 const sectionKeys = [
   'sectionTitles',
   'sectionTextInputs',
-  'sectionEntries',
+  'sectionResults',
   'sectionTotals',
   'sectionTotalTexts',
 ];
-const deleteSection = curry((sectionId, state) => flow(
+const doDeleteSection = curry((sectionId, state) => flow(
   removeIdWithinKeys(sectionKeys, sectionId),
   update('documentSections', mapValues(without([sectionId])))
 )(state));
@@ -49,9 +49,9 @@ const documentKeys = [
   'documentTitles',
   'documentSections',
 ];
-const deleteDocument = curry((documentId, state) => flow(
+const doDeleteDocument = curry((documentId, state) => flow(
   state => reduce(
-    (state, sectionId) => deleteSection(sectionId, state),
+    (state, sectionId) => doDeleteSection(sectionId, state),
     state,
     get(['documentSections', documentId], state)
   ),
@@ -90,13 +90,13 @@ export default (action: Object, state: State = defaultState): State => {
       return set(['sectionTextInputs', action.sectionId], action.textInputs, state);
     case SET_SECTION_RESULT:
       return flow(
-        set(['sectionEntries', action.sectionId], action.entries),
+        set(['sectionResults', action.sectionId], action.entries),
         set(['sectionTotals', action.sectionId], action.total)
       )(state);
     case DELETE_DOCUMENT:
-      return deleteDocument(action.documentId, state);
+      return doDeleteDocument(action.documentId, state);
     case DELETE_SECTION:
-      return deleteSection(action.sectionId, state);
+      return doDeleteSection(action.sectionId, state);
     default:
       return state;
   }
@@ -107,9 +107,17 @@ export const mergeState = (state: Object) =>
   ({ type: MERGE_STATE, state });
 export const addDocument = () =>
   ({ type: ADD_DOCUMENT });
+export const addSection = () =>
+  ({ type: ADD_SECTION });
+export const setSectionTitle = (sectionId: SectionId, title: string) =>
+  ({ type: SET_SECTION_TITLE, sectionId, title });
 export const setTextInputs = (sectionId: SectionId, textInputs: string[]) =>
   ({ type: SET_TEXT_INPUTS, sectionId, textInputs });
 export const setSectionResult = (sectionId: SectionId, entries: RecoraResult[], total: RecoraResult) =>
   ({ type: SET_SECTION_RESULT, sectionId, entries, total });
+export const deleteDocument = (documentId: DocumentId) =>
+  ({ type: DELETE_DOCUMENT, documentId });
+export const deleteSection = (sectionId: SectionId) =>
+  ({ type: DELETE_SECTION, sectionId });
 export { loadDocument } from './persistenceMiddleware';
 /* eslint-enable */

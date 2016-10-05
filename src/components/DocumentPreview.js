@@ -1,32 +1,34 @@
 // @flow
 import React, { PropTypes } from 'react';
-import { map } from 'lodash/fp';
+import { connect } from 'react-redux';
+// import { map } from 'lodash/fp';
 import { Link } from 'react-router';
 import { TweenState } from 'state-transitions';
 import classnames from 'classnames';
-import { container, section, page, title } from '../../styles/document-preview.css';
+import { container, /* section, */ page, title } from '../../styles/document-preview.css';
 import { activeOpacity } from '../../styles/base.css';
 
-const DocumentPreview = ({ documentId, title, sections, sectionTextInputs }) => {
-  const sectionElements = map(sectionId => (
-    <span
-      key={sectionId}
-      className={section}
-      style={{ height: sectionTextInputs[sectionId].length + 1 }}
-    />
-  ), sections);
+const DocumentPreview = ({ documentId, documentTitle }) => {
+  // const sectionElements = map(sectionId => (
+  //   <span
+  //     key={sectionId}
+  //     className={section}
+  //     style={{ height: sectionTextInputs[sectionId].length + 1 }}
+  //   />
+  // ), sections);
+  const sectionElements = null;
 
   const linkClassName = classnames(container, activeOpacity);
 
   return (
-    <Link className={linkClassName} key={documentId} to={`/${documentId}`}>
+    <Link className={linkClassName} to={`/${documentId}`}>
       <TweenState id={`doc-${documentId}`}>
         <span className={page}>
-          { sectionElements }
+          {sectionElements}
         </span>
       </TweenState>
       <span className={title}>
-        {title}
+        {documentTitle}
       </span>
     </Link>
   );
@@ -34,9 +36,11 @@ const DocumentPreview = ({ documentId, title, sections, sectionTextInputs }) => 
 
 DocumentPreview.propTypes = {
   documentId: PropTypes.string,
-  title: PropTypes.string,
-  sections: PropTypes.array,
-  sectionTextInputs: PropTypes.object,
+  documentTitle: PropTypes.string,
 };
 
-export default DocumentPreview;
+export default connect(
+  ({ documents, documentTitles, documentSections, sectionTextInputs }, { documentId }) => ({
+    documentTitle: documentTitles[documentId],
+  })
+)(DocumentPreview);

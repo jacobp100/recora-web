@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
-import { map } from 'lodash/fp';
 import { connect } from 'react-redux';
+import { map } from 'lodash/fp';
 import { AnimateInOut } from 'state-transitions';
 import { Header, HeaderSection } from './Header';
 import { StackLink, HorizontalButton } from './HeaderButton';
@@ -14,18 +14,12 @@ import { container, containerLeaving } from '../../styles/document-list.css';
 
 const DocumentList = ({
   documents,
-  documentTitles,
-  documentSections,
-  sectionTextInputs,
   addDocument,
 }) => {
   let pagePreviews = map(documentId => (
     <DocumentPreview
       key={documentId}
       documentId={documentId}
-      title={documentTitles[documentId]}
-      sections={documentSections[documentId]}
-      sectionTextInputs={sectionTextInputs}
     />
   ), documents);
 
@@ -48,7 +42,7 @@ const DocumentList = ({
       </Header>
       <AnimateInOut animateOutClassName={containerLeaving}>
         <div className={container}>
-          { pagePreviews }
+          {pagePreviews}
         </div>
       </AnimateInOut>
     </div>
@@ -56,13 +50,8 @@ const DocumentList = ({
 };
 
 export default connect(
-  ({ documents, documentTitles, documentSections, sectionTextInputs }) => ({
+  ({ documents }) => ({
     documents,
-    documentTitles,
-    documentSections,
-    sectionTextInputs,
   }),
-  { addDocument },
-  null,
-  { pure: true }
+  { addDocument }
 )(DocumentList);

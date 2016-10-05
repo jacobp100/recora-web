@@ -5,14 +5,14 @@ import { container, section, left, right, center } from '../../styles/header.css
 
 const headerPositions = { left, right, center };
 
-export const Header = ({ children }) => (
+export const Header = ({ children }: Object) => (
   <div className={container}>
-    { children }
+    {children}
   </div>
 );
 
-export const HeaderSection = ({ place, children }) => (
+export const HeaderSection = ({ place, children }: Object) => (
   <div className={classnames(section, headerPositions[place])}>
-    { children }
+    {children}
   </div>
 );

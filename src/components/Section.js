@@ -6,29 +6,30 @@ import TextView from './TextView';
 import TotalRow from './TotalRow';
 import { title, container } from '../../styles/section.css';
 
-const Section = ({ sectionId, documentId, title, entries, total }) => {
-  const totalElement = total && <TotalRow ready={Boolean(entries)} total={total} />;
+const Section = ({ sectionId, sectionTitle, sectionResults, sectionTotal }) => {
+  const ready = Boolean(sectionResults);
+  const totalElement = sectionTotal && <TotalRow ready={ready} total={sectionTotal} />;
 
-  const titleElement = title && (
+  const titleElement = sectionTitle && (
     <h2 className={title}>
-      { title }
+      {sectionTitle}
     </h2>
   );
 
   return (
     <div className={container}>
-      { titleElement }
-      <TextView documentId={documentId} sectionId={sectionId} />
-      { totalElement }
+      {titleElement}
+      <TextView sectionId={sectionId} />
+      {totalElement}
     </div>
   );
 };
 
 export default connect(
-  ({ sectionTitles, sectionEntries, sectionTotals }, { sectionId }) => ({
-    title: get(sectionId, sectionTitles),
-    entries: get(sectionId, sectionEntries),
-    totals: get(sectionId, sectionTotals),
+  ({ sectionTitles, sectionResults, sectionTotals }, { sectionId }) => ({
+    sectionTitle: get(sectionId, sectionTitles),
+    sectionResults: get(sectionId, sectionResults),
+    sectionTotal: get(sectionId, sectionTotals),
   }),
   null,
   null,
