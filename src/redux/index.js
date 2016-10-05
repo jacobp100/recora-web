@@ -1,7 +1,7 @@
 // @flow
 import {
   get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
-  overEvery, uniqueId, includes, merge,
+  overEvery, uniqueId, includes, merge, propertyOf, map, intersection,
 } from 'lodash/fp';
 import type { State, SectionId, DocumentId, RecoraResult } from '../types';
 
@@ -23,6 +23,7 @@ const ADD_SECTION = 'recora:ADD_SECTION';
 const SET_SECTION_TITLE = 'recora:SET_SECTION_TITLE';
 const SET_TEXT_INPUTS = 'recora:SET_TEXT_INPUTS';
 const SET_SECTION_RESULT = 'recora:SET_SECTION_RESULT';
+const REORDER_SECTIONS = 'recora:REORDER_SECTIONS';
 const DELETE_DOCUMENT = 'recora:DELETE_DOCUMENT';
 const DELETE_SECTION = 'recora:DELETE_SECTION';
 
@@ -108,6 +109,18 @@ export default (state: State = defaultState, action: Object): State => {
         set(['sectionResults', action.sectionId], action.entries),
         set(['sectionTotals', action.sectionId], action.total)
       )(state);
+    case REORDER_SECTIONS: {
+      const { documentId } = action;
+      const sectionIds = get(['documentSections', documentId], state);
+      const orderedSectionIds = map(propertyOf(sectionIds), action.order);
+
+      const noSectionsAddedRemoved =
+        intersection(orderedSectionIds, sectionIds).length === sectionIds.length;
+
+      return noSectionsAddedRemoved
+        ? set(['documentSections', documentId], orderedSectionIds)
+        : state;
+    }
     case DELETE_DOCUMENT:
       return doDeleteDocument(action.documentId, state);
     case DELETE_SECTION:
@@ -130,6 +143,8 @@ export const setTextInputs = (sectionId: SectionId, textInputs: string[]) =>
   ({ type: SET_TEXT_INPUTS, sectionId, textInputs });
 export const setSectionResult = (sectionId: SectionId, entries: RecoraResult[], total: RecoraResult) =>
   ({ type: SET_SECTION_RESULT, sectionId, entries, total });
+export const reorderSections = (documentId: DocumentId, order: number[]) =>
+  ({ type: REORDER_SECTIONS, documentId, order });
 export const deleteDocument = (documentId: DocumentId) =>
   ({ type: DELETE_DOCUMENT, documentId });
 export const deleteSection = (sectionId: SectionId) =>

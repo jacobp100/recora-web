@@ -11,9 +11,11 @@
 .item:hover {
   background: #ccc;
 }
-:global(.react-drag-dragging) {
-  position: absolute;
+.item.dragging {
+  /* position: absolute; */
+  cursor: move;
 }
+
 .itemEdit {
   box-sizing: border-box;
   width: 100%;

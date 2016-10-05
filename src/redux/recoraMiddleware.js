@@ -40,7 +40,7 @@ const getDefaultBatchImpl = (): BatchImplementation => {
 
       if (previousEntryIndex !== -1) {
         const { result } = previous[previousEntryIndex];
-        previous = pullAt([previousEntryIndex], previous);
+        previous = pullAt(previousEntryIndex, previous);
         return result;
       }
       return recora.parse(input);
