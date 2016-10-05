@@ -12,8 +12,8 @@ import type { State, DocumentId } from '../types';
 
 const LOAD_DOCUMENT = 'persintance-middleware:LOAD_DOCUMENT';
 
-const sectionTextInputStoragePrefix = 'section-';
-const sectionPreviewPrefix = 'section-preview-';
+const sectionTextInputStoragePrefix = 'section';
+const sectionPreviewPrefix = 'section-preview';
 
 const simpleKeys = [
   'documents',
@@ -38,9 +38,9 @@ const proxyKeys = [
 ];
 
 const getSectionStorageKey =
-  curry((storagePrefix, sectionId) => `${storagePrefix}-${sectionId}`);
+  curry((storagePrefix, sectionId) => `${storagePrefix}::${sectionId}`);
 const getSectionFromStorageKey =
-  curry((storagePrefix, storageKey) => storageKey.substring(storagePrefix.length + 1));
+  curry((storagePrefix, storageKey) => storageKey.substring(storagePrefix.length + 2));
 
 
 const getPatchForStates = (nextState, previousState) => {
