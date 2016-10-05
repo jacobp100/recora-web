@@ -1,7 +1,7 @@
 // @flow
 import {
   reduce, concat, map, fromPairs, isEmpty, isEqual, curry, over, constant, partial, flow, assign,
-  pickBy, omitBy, keys, toPairs, mapValues, zip, get, pick, mapKeys, isNil,
+  pickBy, omitBy, keys, toPairs, mapValues, zip, get, pick, mapKeys, isNil, compact,
 } from 'lodash/fp';
 import { debounce } from 'lodash';
 import { getAddedChangedRemovedSectionItems, getPromiseStorage } from './util';
@@ -88,18 +88,23 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
   };
 
   const doSave = async () => {
+    if (isEmpty(storagePatch)) return;
+
+    const storagePatchToApply = storagePatch;
+    storagePatch = {};
+
+    const keysToRemove = flow(pickBy(isNil), keys)(storagePatchToApply);
+    const pairsToSet = flow(omitBy(isNil), mapValues(JSON.stringify), toPairs)(storagePatchToApply);
+
     try {
-      if (isEmpty(storagePatch)) return;
-
-      const keysToRemove = flow(pickBy(isNil), keys)(storagePatch);
-      const pairsToSet = flow(omitBy(isNil), mapValues(JSON.stringify), toPairs)(storagePatch);
-
-      if (keysToRemove) await storage.multiRemove(keysToRemove);
-      if (pairsToSet) await storage.multiSet(pairsToSet);
-      // Only clear the patch if we successfuly write the operations
-      storagePatch = {};
+      await Promise.all(compact([
+        keysToRemove && storage.multiRemove(keysToRemove),
+        pairsToSet && storage.multiSet(pairsToSet),
+      ]));
     } catch (e) {
-      return;
+      // Try to apply again in the next save
+      storagePatch = assign(storagePatchToApply, storagePatch);
+      queuePatch(); // eslint-disable-line
     }
   };
 

@@ -31,13 +31,13 @@ const DocumentList = ({
     <div>
       <Header>
         <HeaderSection place="left">
-          <HorizontalButton icon="file" text="New Document" onClick={addDocument} />
+          <HorizontalButton iconName="file" text="New Document" onClick={addDocument} />
         </HeaderSection>
         <HeaderSection place="center">
           <HeaderTitle>Recora</HeaderTitle>
         </HeaderSection>
         <HeaderSection place="right">
-          <StackLink icon="help1" text="About" to="/" />
+          <StackLink iconName="help1" text="About" to="/" />
         </HeaderSection>
       </Header>
       <AnimateInOut animateOutClassName={containerLeaving}>

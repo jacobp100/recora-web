@@ -34,6 +34,11 @@
   color: #fff;
 }
 
+.icon {
+  width: 1em;
+  height: 1em;
+}
+
 .fadeIn {
   animation: fadeInAnimation 0.5s ease-in;
 }

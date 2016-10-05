@@ -1,6 +1,7 @@
 // @flow
 import React, { PropTypes } from 'react';
 import classnames from 'classnames';
+import Icon from './Icon';
 import { title, body, button } from '../../styles/no-documents.css';
 import { activeOpacity } from '../../styles/base.css';
 
@@ -13,7 +14,7 @@ const NoDocuments = ({ onAddDocument }: Object) => (
         className={classnames(button, activeOpacity)}
         onClick={onAddDocument}
       >
-        <span className="pe-7s-file" />
+        <Icon iconName="file" />
         &nbsp;New Document
       </button>
       to get started

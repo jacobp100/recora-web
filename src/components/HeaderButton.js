@@ -2,6 +2,7 @@
 import React, { PropTypes } from 'react';
 import classnames from 'classnames';
 import { Link } from 'react-router';
+import Icon from './Icon';
 import {
   stackContainer, horizontalContainer, container, stackIcon, stackLabel, horizontalIcon,
   horizontalLabel,
@@ -37,43 +38,43 @@ const labelStyles = {
   [HORIZONTAL]: horizontalLabel,
 };
 
-const Item = ({ component: Component, styleName, props, icon, text }) => (
-  <Component className={containerStyles[styleName]} {...props} >
-    <span className={iconStyles[styleName]}>
-      <span className={`pe-7s-${icon}`} />
+const Item = ({ component: Component, variant, props, iconName, text }) => (
+  <Component className={containerStyles[variant]} {...props} >
+    <span className={iconStyles[variant]}>
+      <Icon iconName={iconName} />
     </span>
-    <span className={labelStyles[styleName]}>{text}</span>
+    <span className={labelStyles[variant]}>{text}</span>
   </Component>
 );
 
 const linkPropTypes = {
-  icon: PropTypes.string,
+  iconName: PropTypes.string,
   text: PropTypes.string,
   to: PropTypes.string,
 };
 
 const buttonPropTypes = {
-  icon: PropTypes.string,
+  iconName: PropTypes.string,
   text: PropTypes.string,
   onClick: PropTypes.func,
 };
 
-export const StackLink = ({ icon, text, to }: Object) => (
-  <Item component={Link} styleName={STACK} props={{ to }} icon={icon} text={text} />
+export const StackLink = ({ iconName, text, to }: Object) => (
+  <Item component={Link} variant={STACK} props={{ to }} iconName={iconName} text={text} />
 );
 StackLink.propTypes = linkPropTypes;
 
-export const HorizontalLink = ({ icon, text, to }: Object) => (
-  <Item component={Link} styleName={HORIZONTAL} props={{ to }} icon={icon} text={text} />
+export const HorizontalLink = ({ iconName, text, to }: Object) => (
+  <Item component={Link} variant={HORIZONTAL} props={{ to }} iconName={iconName} text={text} />
 );
 HorizontalLink.propTypes = linkPropTypes;
 
-export const StackButton = ({ icon, text, onClick }: Object) => (
-  <Item component={'button'} styleName={STACK} props={{ onClick }} icon={icon} text={text} />
+export const StackButton = ({ iconName, text, onClick }: Object) => (
+  <Item component={'button'} variant={STACK} props={{ onClick }} iconName={iconName} text={text} />
 );
 StackButton.propTypes = buttonPropTypes;
 
-export const HorizontalButton = ({ icon, text, onClick }: Object) => (
-  <Item component={'button'} styleName={HORIZONTAL} props={{ onClick }} icon={icon} text={text} />
+export const HorizontalButton = ({ iconName, text, onClick }: Object) => (
+  <Item component={'button'} variant={HORIZONTAL} props={{ onClick }} iconName={iconName} text={text} />
 );
 HorizontalButton.propTypes = buttonPropTypes;

@@ -1,6 +1,6 @@
 // @flow
 /* global document */
-import React, { PropTypes } from 'react';
+import React, { Component, PropTypes } from 'react';
 import { AnimateInOut } from 'state-transitions';
 import classnames from 'classnames';
 import {
@@ -10,7 +10,7 @@ import {
 // Can't use CSSTransitionGroup as a container to all popovers
 // Switching from one popover to another hid the second one
 // Even doing each popover in its own CSSTransitionGroup did the same
-export default class Popover extends React.Component {
+export default class Popover extends Component {
   static propTypes = {
     top: PropTypes.number,
     left: PropTypes.number,

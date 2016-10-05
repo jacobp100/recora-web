@@ -6,12 +6,10 @@ import Page from './Page';
 import { Header, HeaderSection } from './Header';
 import { StackButton, HorizontalLink } from './HeaderButton';
 import SettingsPopup from './SettingsPopup';
-import UnitsPopup from './UnitsPopup';
 import SectionsPopover from './SectionsPopover';
 
 type Popover = { type: string, top: number, left: number };
 
-const UNITS = 'units';
 const SETTINGS = 'settings';
 const SECTIONS = 'sections';
 
@@ -41,7 +39,6 @@ export default class DocumentView extends Component {
     }
   }
 
-  toggleUnitsPopup = () => this.setState({ popup: UNITS })
   toggleSettingsPopup = () => this.setState({ popup: SETTINGS })
   closePopup = () => this.setState({ popup: null })
 
@@ -51,9 +48,6 @@ export default class DocumentView extends Component {
   renderPopup = cond([
     [equals(SETTINGS), () => (
       <SettingsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
-    )],
-    [equals(UNITS), () => (
-      <UnitsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
     )],
     [always(true), always(null)],
   ]);
@@ -79,16 +73,15 @@ export default class DocumentView extends Component {
       <div>
         <Header>
           <HeaderSection place="left">
-            <HorizontalLink icon="angle-left" text="Documents" to="/" />
+            <HorizontalLink iconName="angle-left" text="Documents" to="/" />
           </HeaderSection>
           <HeaderSection place="center">
-            <StackButton icon="notebook" text="Sections" onClick={this.toggleSectionsPopover} />
+            <StackButton iconName="notebook" text="Sections" onClick={this.toggleSectionsPopover} />
           </HeaderSection>
           <HeaderSection place="right">
-            <StackButton icon="share" text="Share" />
-            <StackButton icon="print" text="Print" />
-            <StackButton icon="graph3" text="Units" onClick={this.toggleUnitsPopup} />
-            <StackButton icon="config" text="Settings" onClick={this.toggleSettingsPopup} />
+            <StackButton iconName="share" text="Share" />
+            <StackButton iconName="print" text="Print" />
+            <StackButton iconName="config" text="Settings" onClick={this.toggleSettingsPopup} />
           </HeaderSection>
         </Header>
         <TweenState id={`doc-${documentId}`} fadeOutDuration={0.4}>

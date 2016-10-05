@@ -1,4 +1,6 @@
-/* eslint max-len: [0] */
+/* eslint-disable max-len */
+/* eslint-disable flowtype/require-valid-file-annotation */
+const autoprefixer = require('autoprefixer');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
@@ -39,7 +41,7 @@ module.exports = {
     ],
   },
   postcss: [
-    require('autoprefixer'),
+    autoprefixer,
   ],
   plugins: [
     new ExtractTextPlugin('style.css', { allChunks: true }),
