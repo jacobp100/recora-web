@@ -14,6 +14,7 @@ const TITLE_TYPE = 'title';
 // https://github.com/gaearon/react-dnd/blob/master/examples/04%20Sortable/Simple/Card.js
 const cardSource = {
   beginDrag: props => ({ id: props.id, index: props.index }),
+  endDrag: (props, monitor) => { if (monitor.didDrop) props.onDragEnd(); },
 };
 
 /* eslint-disable react/no-find-dom-node */
@@ -32,7 +33,7 @@ const cardTarget = {
     if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
     if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
-    props.reorder(dragIndex, hoverIndex);
+    props.onReorder(dragIndex, hoverIndex);
     monitor.getItem().index = hoverIndex; // eslint-disable-line
   },
 };
@@ -50,7 +51,7 @@ class SectionsPopoverItem extends Component {
   onKeyDown = ({ keyCode }: Object) => cond([
     // enter
     [equals(13), () => {
-      this.props.onSetTitle(this.state.title);
+      this.props.setSectionTitle(this.state.title);
       this.setState({ isEditing: false });
     }],
     // escape

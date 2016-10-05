@@ -111,15 +111,15 @@ export default (state: State = defaultState, action: Object): State => {
         set(['sectionTotals', action.sectionId], action.total)
       )(state);
     case REORDER_SECTIONS: {
-      const { documentId } = action;
+      const { documentId, order } = action;
       const sectionIds = get(['documentSections', documentId], state);
-      const orderedSectionIds = map(propertyOf(sectionIds), action.order);
+      const orderedSectionIds = map(propertyOf(sectionIds), order);
 
       const noSectionsAddedRemoved =
         intersection(orderedSectionIds, sectionIds).length === sectionIds.length;
 
       return noSectionsAddedRemoved
-        ? set(['documentSections', documentId], orderedSectionIds)
+        ? set(['documentSections', documentId], orderedSectionIds, state)
         : state;
     }
     case DELETE_DOCUMENT:

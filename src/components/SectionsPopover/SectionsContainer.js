@@ -24,6 +24,13 @@ class PopoverContainer extends Component {
 
   state: { order: number[] }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.sections !== this.props.sections) {
+      const order = range(0, nextProps.sections.length);
+      this.setState({ order });
+    }
+  }
+
   reorder = (dragIndex, hoverIndex) => {
     this.setState(state => {
       const sectionIndex = state.order[dragIndex];
@@ -37,6 +44,10 @@ class PopoverContainer extends Component {
     });
   }
 
+  dragEnd = () => {
+    this.props.reorderSections(this.state.order);
+  }
+
   render() {
     const { sections } = this.props;
     const { order } = this.state;
@@ -47,7 +58,8 @@ class PopoverContainer extends Component {
         index={index}
         sectionIndex={order[index]}
         sectionId={sections[order[index]]}
-        reorder={this.reorder}
+        onReorder={this.reorder}
+        onDragEnd={this.dragEnd}
       />
     ), range(0, sections.length));
 
