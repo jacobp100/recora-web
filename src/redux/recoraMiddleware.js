@@ -1,6 +1,7 @@
 // @flow
 import {
-  map, findIndex, pullAt, concat, first, keys, getOr, forEach, get, set,
+  __, map, findIndex, pullAt, concat, first, keys, getOr, forEach, isEqual, flow, matchesProperty,
+  filter, assign, omit, isEmpty, get, keyBy, mapValues, some, reduce,
 } from 'lodash/fp';
 import Recora from 'recora';
 import type { State, SectionId, RecoraResult } from '../types';
@@ -17,7 +18,11 @@ type BatchImplementation = {
   unqueueSection: (sectionId: SectionId) => void,
   addResultListener: (callback: ResultListenerCallback) => void,
 };
-type Result = { input: string, result: ?RecoraResult };
+type Result = {
+  input: string,
+  result: ?RecoraResult,
+  removedAssignment: ?RecoraResult,
+};
 type ImmutableConstants = Object;
 type FiberOptions = {
   requestIdleCallback: (fn: () => void) => any,
@@ -39,16 +44,18 @@ type CalculationState = {
   results: Result[],
 };
 
+const NODE_ASSIGNMENT = 'NODE_ASSIGNMENT';
+
 const createFiberRunner = ({
   requestIdleCallback = global.requestAnimationFrame,
   frameBudget = 8,
 }: FiberOptions = {}): FiberRunner<any> => (fn, initialState) => {
   let cancelled = false;
-  let currentState = initialState;
+  let state = initialState;
   let lastContinuationTime;
 
-  const next = (state) => {
-    currentState = state;
+  const next = (nextState) => {
+    state = nextState;
     if (Date.now() - lastContinuationTime < frameBudget) {
       continueFiber();  // eslint-disable-line
     } else {
@@ -59,17 +66,41 @@ const createFiberRunner = ({
   const continueFiber = () => {
     if (cancelled) return;
     lastContinuationTime = Date.now();
-    fn(currentState, next);
+    fn(state, next);
   };
 
-  continueFiber();
+  requestIdleCallback(continueFiber);
 
   return {
-    getState: () => currentState,
+    getState: () => state,
     cancel: () => { cancelled = true; },
   };
 };
 
+
+const getAssignments = flow(
+  map(get(['result', 'value'])),
+  filter(matchesProperty('type', NODE_ASSIGNMENT))
+);
+const resultIsAssignment = matchesProperty(['result', 'value', 'type'], NODE_ASSIGNMENT);
+
+const removeDuplicateAssignments = reduce((outputResults, result) => {
+  let isDuplicateAssignment;
+  if (resultIsAssignment(result)) {
+    const identifier = result.result.value.identifier;
+
+    isDuplicateAssignment = flow(
+      getAssignments,
+      some({ identifier })
+    )(outputResults);
+  }
+
+  const outputResult = isDuplicateAssignment
+    ? { input: result.input, result: null, removedAssignment: result.result }
+    : result;
+
+  return concat(outputResults, outputResult);
+}, []);
 
 const getDefaultBatchImpl = ({
   requestIdleCallback = global.requestAnimationFrame,
@@ -124,30 +155,22 @@ const getDefaultBatchImpl = ({
     queueComputation();
   };
 
-  const updateInstanceWithAssignmentResult = (instance, constants, result) => {
-    const { identifier, value } = result.value;
-
-    // Ignore subsequent assignments if they type something like, test = 3; test = 4
-    if (identifier in constants) return { result: null, constants };
-
-    const newConstants = set(identifier, value, constants);
-    instance.setConstants(newConstants);
-    return { result, constants: newConstants };
-  };
-
-  const getStateForRecalculation = ({ sectionId, inputs }: CalculationState): CalculationState => ({
+  const getStateForRecalculation = (
+    { sectionId, inputs }: CalculationState,
+    constants
+  ): CalculationState => ({
     sectionId,
     forceRecalculation: true,
-    constants: {},
-    instance: new Recora(),
+    constants,
+    instance: new Recora().setConstants(constants),
     inputs,
     previous: [],
     results: [],
   });
 
   const sectionComputation = (state: CalculationState, next) => {
-    const { sectionId, forceRecalculation, instance, inputs } = state;
-    let { constants, previous, results } = state;
+    const { sectionId, forceRecalculation, constants, instance, inputs } = state;
+    let { previous, results } = state;
     const getCurrentState = (): CalculationState =>
       ({ sectionId, forceRecalculation, instance, constants, inputs, previous, results });
     const remainingInputs = inputs.slice(results.length);
@@ -160,33 +183,41 @@ const getDefaultBatchImpl = ({
       let result;
       if (previousEntryIndex !== -1) {
         // Almost free, do even if we've exceeded the frame budget
-        result = previous[previousEntryIndex].result;
-        previous = pullAt(1, previousEntryIndex);
+        const previousValue = previous[previousEntryIndex];
+        result = previousValue.removedAssignment || previousValue.result;
+        previous = pullAt(previousEntryIndex, previous);
       } else if (!didPerformExpensiveComputation) {
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
         didPerformExpensiveComputation = true;
-
-        const isAssignment = get(['value', 'type'], result) === 'NODE_ASSIGNMENT';
-
-        if (isAssignment) {
-          if (!forceRecalculation) {
-            next(getStateForRecalculation(getCurrentState()));
-            return;
-          }
-
-          // Safe to mutate instance, as we generated a new instance when
-          // we started forceRecalculation
-          const update = updateInstanceWithAssignmentResult(instance, constants, result);
-          result = update.result;
-          constants = update.constants;
-        }
       } else {
         next(getCurrentState());
         return;
       }
 
-      results = concat(results, { input, result });
+      results = concat(results, { input, result, removedAssignment: null });
+    }
+
+    results = removeDuplicateAssignments(results);
+
+    const newAssignments = flow(
+      getAssignments,
+      filter(assignment => !isEqual(constants[assignment.identifier], assignment.value))
+    )(results);
+
+    const removedAssignments = getAssignments(previous);
+
+    if (!isEmpty(newAssignments) || !isEmpty(removedAssignments)) {
+      const newConstants = flow(keyBy('identifier'), mapValues('value'))(newAssignments);
+      const removedConstantNames = map('identifier', removedAssignments);
+
+      const nextConstants = flow(
+        omit(removedConstantNames),
+        assign(__, newConstants)
+      )(constants);
+
+      next(getStateForRecalculation(getCurrentState(), nextConstants));
+      return;
     }
 
     const entries = map('result', results);

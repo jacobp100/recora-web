@@ -2,7 +2,7 @@
 
 export type DocumentId = string;
 export type SectionId = string;
-export type RecoraResult = { text: string, pretty: string };
+export type RecoraResult = { text: string, pretty: string, value: ?Object };
 export type State = {
   documents: DocumentId[],
   documentTitles: { [key:DocumentId]: string },

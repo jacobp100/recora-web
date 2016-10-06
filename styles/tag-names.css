@@ -32,9 +32,9 @@
 .TOKEN_BRACKET_OPEN {
   color: #603260;
 }
-/*.TOKEN_SYMBOL {
+.TOKEN_CONSTANT {
   color: #C1392B;
-}*/
+}
 .placeholder {
   color: #888;
 }
