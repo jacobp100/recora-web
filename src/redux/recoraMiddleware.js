@@ -1,6 +1,6 @@
 // @flow
 import {
-  map, findIndex, isEmpty, concat, first, keys, getOr, forEach, get, has, set,
+  map, findIndex, pullAt, concat, first, keys, getOr, forEach, get, set,
 } from 'lodash/fp';
 import Recora from 'recora';
 import type { State, SectionId, RecoraResult } from '../types';
@@ -18,18 +18,68 @@ type BatchImplementation = {
   addResultListener: (callback: ResultListenerCallback) => void,
 };
 type Result = { input: string, result: ?RecoraResult };
-type Fiber = {
+type ImmutableConstants = Object;
+type FiberOptions = {
+  requestIdleCallback: (fn: () => void) => any,
+  frameBudget: number,
+};
+type FiberFunction<T> = (state: T, next: (state: T) => void, initialState: T) => void;
+type Fiber<T> = {
+  getState: () => T,
+  cancel: () => void,
+};
+type FiberRunner<T> = (fn: FiberFunction<T>, initialState: T) => Fiber<T>;
+type CalculationState = {
   sectionId: SectionId,
-  start: number,
+  forceRecalculation: bool,
+  instance: Recora,
+  constants: Object,
+  inputs: string[],
   previous: Result[],
   results: Result[],
 };
-type ImmutableConstants = Object;
+
+const createFiberRunner = ({
+  requestIdleCallback = global.requestAnimationFrame,
+  frameBudget = 8,
+}: FiberOptions = {}): FiberRunner<any> => (fn, initialState) => {
+  let cancelled = false;
+  let currentState = initialState;
+  let lastContinuationTime;
+
+  const next = (state) => {
+    currentState = state;
+    if (Date.now() - lastContinuationTime < frameBudget) {
+      continueFiber();  // eslint-disable-line
+    } else {
+      requestIdleCallback(continueFiber); // eslint-disable-line
+    }
+  };
+
+  const continueFiber = () => {
+    if (cancelled) return;
+    lastContinuationTime = Date.now();
+    fn(currentState, next);
+  };
+
+  continueFiber();
+
+  return {
+    getState: () => currentState,
+    cancel: () => { cancelled = true; },
+  };
+};
+
 
 const getDefaultBatchImpl = ({
   requestIdleCallback = global.requestAnimationFrame,
   frameBudget = 8,
 } = {}): BatchImplementation => {
+  const runFiber: FiberRunner<CalculationState> = createFiberRunner({
+    requestIdleCallback,
+    frameBudget,
+  });
+
   let resultListeners = [];
 
   // Lazy map
@@ -38,67 +88,61 @@ const getDefaultBatchImpl = ({
   // Global state (All objects mutable)
   const queuedInputs: { [key:SectionId]: string[] } = {};
   const previousResultsPerSection: { [key:SectionId]: Result[] } = {};
-  const forceRecalculationPerSection: { [key:SectionId]: bool } = {};
-  const constantMapPerSection: { [key:SectionId]: ImmutableConstants } = {};
-  let fiber: ?Fiber = null; // Note that all the properties of fiber are mutated in place
-  let idleCallback = null;
+  const constantsPerSection: { [key:SectionId]: ImmutableConstants } = {};
+  let fiber: ?Fiber<CalculationState> = null;
 
-  const generateFiberFor = (sectionId, start = Date.now()) => {
-    const forceRecalculation = forceRecalculationPerSection[sectionId] || false;
-    const previous = !forceRecalculation
-      ? getOr([], sectionId, previousResultsPerSection).slice()
-      : [];
-    return { sectionId, start, previous, results: [] };
-  };
-
-  const setFiberIfEmpty = () => {
-    if (fiber !== null) return;
-    const sectionId = first(keys(queuedInputs));
-    if (!sectionId) return;
-    fiber = generateFiberFor(sectionId);
-  };
-
-  const cancelFiberFor = (sectionId) => {
-    if (fiber && fiber.sectionId === sectionId) fiber = null;
-  };
 
   const getInstanceFor = (sectionId) => {
     if (sectionId in instancesPerSection) return instancesPerSection[sectionId];
     const instance = new Recora();
-    instancesPerSection[sectionId] = instance;
+    const constants = constantsPerSection[sectionId];
+    if (constants) instance.setConstants(constants);
     return instance;
   };
 
-  const updateInstanceWithAssignmentResult = (sectionId, instance, result) => {
+  const queueComputation = () => {
+    if (fiber !== null) return;
+    const sectionId = first(keys(queuedInputs));
+    if (!sectionId) return;
+
+    /* eslint-disable no-use-before-define */
+    fiber = runFiber(sectionComputation, ({
+      sectionId,
+      forceRecalculation: false,
+      instance: getInstanceFor(sectionId),
+      constants: getOr({}, sectionId, constantsPerSection),
+      inputs: getOr([], sectionId, queuedInputs),
+      previous: getOr([], sectionId, previousResultsPerSection),
+      results: [],
+    }: CalculationState));
+    /* eslint-enable */
+  };
+
+  const cancelFiberFor = (sectionId) => {
+    if (fiber && fiber.getState().sectionId === sectionId) {
+      fiber.cancel();
+      fiber = null;
+    }
+    queueComputation();
+  };
+
+  const updateInstanceWithAssignmentResult = (instance, constants, result) => {
     const { identifier, value } = result.value;
 
     // Ignore subsequent assignments if they type something like, test = 3; test = 4
-    if (has([sectionId, identifier], constantMapPerSection)) return null;
+    if (identifier in constants) return { result: null, constants };
 
-    const constants = set(identifier, value, constantMapPerSection[sectionId]);
-    instance.setConstants(constants);
-    return result;
+    const newConstants = set(identifier, value, constants);
+    instance.setConstants(newConstants);
+    return { result, constants: newConstants };
   };
 
-  const recalculateSection = (sectionId, start) => {
-    // Recalculate entire section top down
-    // Reset constants, because the updateInstanceWithAssignmentResult will handle them
-    constantMapPerSection[sectionId] = {};
-    forceRecalculationPerSection[sectionId] = true;
-    fiber = generateFiberFor(sectionId, start);
-    performSectionComputation(); // eslint-disable-line
-  };
+  const sectionComputation = (state: CalculationState, next) => {
+    const { sectionId, forceRecalculation, instance, inputs } = state;
+    let { constants, previous, results } = state;
+    const remainingInputs = inputs.slice(results.length);
 
-  const performSectionComputation = () => {
-    setFiberIfEmpty();
-    if (!fiber) return;
-
-    if (fiber.start === -1) fiber.start = Date.now();
-    const { sectionId, start, previous, results } = fiber;
-    const remainingInputs = queuedInputs[sectionId].slice(results.length);
-    const instance = getInstanceFor(sectionId);
-
-    const forceRecalculation = forceRecalculationPerSection[sectionId];
+    let didPerformExpensiveComputation = false;
 
     for (const input of remainingInputs) {
       const previousEntryIndex = findIndex({ input }, previous);
@@ -107,56 +151,72 @@ const getDefaultBatchImpl = ({
       if (previousEntryIndex !== -1) {
         // Almost free, do even if we've exceeded the frame budget
         result = previous[previousEntryIndex].result;
-        previous.splice(previousEntryIndex, 1);
-      } else if (Date.now() - start < frameBudget) {
+        previous = pullAt(1, previousEntryIndex);
+      } else if (!didPerformExpensiveComputation) {
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
+        didPerformExpensiveComputation = true;
 
         const isAssignment = get(['value', 'type'], result) === 'NODE_ASSIGNMENT';
 
         if (isAssignment) {
           if (!forceRecalculation) {
-            recalculateSection(sectionId, start);
+            next(({
+              sectionId,
+              forceRecalculation: true,
+              constants: {},
+              instance: new Recora(),
+              inputs,
+              previous: [],
+              results: [],
+            }: CalculationState));
             return;
           }
 
-          result = updateInstanceWithAssignmentResult(sectionId, instance, result);
+          const update = updateInstanceWithAssignmentResult(instance, constants, result);
+          result = update.result;
+          constants = update.constants;
         }
       } else {
-        // Exceeded the frame budget, continue in next frame
-        // We'll use the same fiber as here
-        idleCallback = requestIdleCallback(performSectionComputation);
-        // Renew frame budget on continuation
-        fiber.start = -1;
+        next(({
+          sectionId,
+          forceRecalculation,
+          instance,
+          constants,
+          inputs,
+          previous,
+          results,
+        }: CalculationState));
         return;
       }
 
-      results.push({ input, result });
+      results = concat(results, { input, result });
     }
-
-    previousResultsPerSection[sectionId] = results;
-    if (forceRecalculationPerSection[sectionId]) forceRecalculationPerSection[sectionId] = false;
 
     const entries = map('result', results);
     const total = instance.parse('');
     forEach(resultListener => resultListener(sectionId, entries, total), resultListeners);
 
     delete queuedInputs[sectionId];
+    previousResultsPerSection[sectionId] = results;
+    constantsPerSection[sectionId] = constants;
     fiber = null;
-    idleCallback = !isEmpty(queuedInputs)
-      ? requestIdleCallback(performSectionComputation)
-      : null;
+    queueComputation();
+  };
+
+  const resetFiberFor = (sectionId) => {
+    cancelFiberFor(sectionId);
+    queueComputation();
   };
 
   const queueSection = (sectionId, inputs) => {
     queuedInputs[sectionId] = inputs;
-    cancelFiberFor(sectionId);
-    if (idleCallback === null) idleCallback = requestIdleCallback(performSectionComputation);
+    resetFiberFor(sectionId);
   };
 
   const unqueueSection = (sectionId) => {
     delete queuedInputs[sectionId];
-    cancelFiberFor(sectionId);
+    resetFiberFor(sectionId);
   };
 
   return {
