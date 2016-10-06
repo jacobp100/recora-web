@@ -1,8 +1,5 @@
 // @flow
-import {
-  update, union, map, findIndex, pullAt, isEmpty, concat, first, keys, unset, getOr, flow, zip, set,
-  forEach,
-} from 'lodash/fp';
+import { map, findIndex, isEmpty, concat, first, keys, getOr, forEach, get } from 'lodash/fp';
 import Recora from 'recora';
 import type { State, SectionId, RecoraResult } from '../types';
 import { getAddedChangedRemovedSectionItems } from './util';
@@ -18,65 +15,122 @@ type BatchImplementation = {
   unqueueSection: (sectionId: SectionId) => void,
   addResultListener: (callback: ResultListenerCallback) => void,
 };
+type Result = { input: string, result: RecoraResult };
+type Fiber = {
+  sectionId: SectionId,
+  previous: Result[],
+  results: Result[],
+  start: number,
+};
 
-const recora = new Recora();
-
-const getDefaultBatchImpl = (): BatchImplementation => {
+const getDefaultBatchImpl = ({
+  requestIdleCallback = global.requestAnimationFrame,
+  frameBudget = 8,
+} = {}): BatchImplementation => {
   let resultListeners = [];
 
-  let queuedInputs: { [key:SectionId]: string[] } = {};
-  let previousResults: { [key:SectionId]: { input: string, result: RecoraResult }[] } = {};
+  // Lazy map
+  const instancesPerSection: { [key:SectionId]: Recora } = {};
+
+  // Global state
+  const queuedInputs: { [key:SectionId]: string[] } = {};
+  const previousResultsPerSection: { [key:SectionId]: Result[] } = {};
+  const forceRecalculationPerSection: { [key:SectionId]: bool } = {};
+  let fiber: ?Fiber = null; // Note that all the properties of fiber are mutated in place
   let idleCallback = null;
 
-  const performSectionComputation = () => {
+  const generateFiberFor = (sectionId, start = Date.now()) => {
+    const forceRecalculation = forceRecalculationPerSection[sectionId] || false;
+    const previous = !forceRecalculation
+      ? getOr([], sectionId, previousResultsPerSection).slice()
+      : [];
+    return { sectionId, previous, results: [], start };
+  };
+
+  const setFiberIfEmpty = () => {
+    if (fiber !== null) return;
     const sectionId = first(keys(queuedInputs));
     if (!sectionId) return;
-    const inputs = getOr([], sectionId, queuedInputs);
-    let previous = getOr([], sectionId, previousResults).slice();
+    fiber = generateFiberFor(sectionId);
+  };
 
-    const entries = map(input => {
-      // FIXME: text, not input
+  const cancelFiberFor = (sectionId) => {
+    if (fiber && fiber.sectionId === sectionId) fiber = null;
+  };
+
+  const getInstanceFor = (sectionId) => {
+    if (sectionId in instancesPerSection) return instancesPerSection[sectionId];
+    const instance = new Recora();
+    instancesPerSection[sectionId] = instance;
+    return instance;
+  };
+
+  const performSectionComputation = () => {
+    setFiberIfEmpty();
+    if (!fiber) return;
+
+    if (fiber.start === -1) fiber.start = Date.now();
+    const { sectionId, previous, results, start } = fiber;
+    const remainingInputs = queuedInputs[sectionId].slice(results.length);
+    const instance = getInstanceFor(sectionId);
+
+    for (const input of remainingInputs) {
       const previousEntryIndex = findIndex({ input }, previous);
 
+      let result;
       if (previousEntryIndex !== -1) {
-        const { result } = previous[previousEntryIndex];
-        previous = pullAt(previousEntryIndex, previous);
-        return result;
+        // Almost free, do even if we've exceeded the frame budget
+        result = previous[previousEntryIndex].result;
+        previous.splice(previousEntryIndex, 1);
+      } else if (Date.now() - start < frameBudget) {
+        // Expensive, don't do if we've exceeded the frame budget
+        result = instance.parse(input);
+
+        const isAssignment = get(['value', 'type'], result) === 'NODE_ASSIGNMENT';
+        if (isAssignment && !forceRecalculationPerSection[sectionId]) {
+          const { identifier, value } = result.value;
+          instance.setConstant(identifier, value);
+
+          forceRecalculationPerSection[sectionId] = true;
+          fiber = generateFiberFor(sectionId, start);
+          performSectionComputation();
+          return;
+        }
+      } else {
+        // Exceeded the frame budget, continue in next frame
+        // We'll use the same fiber as here
+        idleCallback = requestIdleCallback(performSectionComputation);
+        // Renew frame budget on continuation
+        fiber.start = -1;
+        return;
       }
-      return recora.parse(input);
-    }, inputs);
 
-    const total = recora.parse('');
+      results.push({ input, result });
+    }
 
-    const results = flow(
-      zip(inputs),
-      map(([result, input]) => ({ result, input }))
-    )(entries);
+    previousResultsPerSection[sectionId] = results;
+    if (sectionId in forceRecalculationPerSection) forceRecalculationPerSection[sectionId] = false;
 
-    previousResults = set(sectionId, results, previousResults);
-    queuedInputs = unset(sectionId, queuedInputs);
-
+    const entries = map('result', results);
+    const total = instance.parse('');
     forEach(resultListener => resultListener(sectionId, entries, total), resultListeners);
 
+    delete queuedInputs[sectionId];
+    fiber = null;
     idleCallback = !isEmpty(queuedInputs)
-      ? global.requestAnimationFrame(performSectionComputation)
+      ? requestIdleCallback(performSectionComputation)
       : null;
   };
 
   const queueSection = (sectionId, inputs) => {
-    queuedInputs = update(
-      sectionId,
-      existingInputs => (existingInputs ? union(existingInputs, inputs) : inputs),
-      queuedInputs
-    );
-
-    if (idleCallback === null) {
-      idleCallback = global.requestAnimationFrame(performSectionComputation);
-    }
+    queuedInputs[sectionId] = inputs;
+    cancelFiberFor(sectionId);
+    if (idleCallback === null) idleCallback = requestIdleCallback(performSectionComputation);
   };
 
   const unqueueSection = (sectionId) => {
-    queuedInputs = unset(sectionId, queuedInputs);
+    delete queuedInputs[sectionId];
+    cancelFiberFor(sectionId);
   };
 
   return {
