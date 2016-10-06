@@ -137,9 +137,21 @@ const getDefaultBatchImpl = ({
     return { result, constants: newConstants };
   };
 
+  const getStateForRecalculation = ({ sectionId, inputs }: CalculationState): CalculationState => ({
+    sectionId,
+    forceRecalculation: true,
+    constants: {},
+    instance: new Recora(),
+    inputs,
+    previous: [],
+    results: [],
+  });
+
   const sectionComputation = (state: CalculationState, next) => {
     const { sectionId, forceRecalculation, instance, inputs } = state;
     let { constants, previous, results } = state;
+    const getCurrentState = (): CalculationState =>
+      ({ sectionId, forceRecalculation, instance, constants, inputs, previous, results });
     const remainingInputs = inputs.slice(results.length);
 
     let didPerformExpensiveComputation = false;
@@ -161,32 +173,18 @@ const getDefaultBatchImpl = ({
 
         if (isAssignment) {
           if (!forceRecalculation) {
-            next(({
-              sectionId,
-              forceRecalculation: true,
-              constants: {},
-              instance: new Recora(),
-              inputs,
-              previous: [],
-              results: [],
-            }: CalculationState));
+            next(getStateForRecalculation(getCurrentState()));
             return;
           }
 
+          // Safe to mutate instance, as we generated a new instance when
+          // we started forceRecalculation
           const update = updateInstanceWithAssignmentResult(instance, constants, result);
           result = update.result;
           constants = update.constants;
         }
       } else {
-        next(({
-          sectionId,
-          forceRecalculation,
-          instance,
-          constants,
-          inputs,
-          previous,
-          results,
-        }: CalculationState));
+        next(getCurrentState());
         return;
       }
 
