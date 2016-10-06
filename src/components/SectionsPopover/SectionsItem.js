@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { flow, get, equals, cond } from 'lodash/fp';
 import { DragSource, DropTarget } from 'react-dnd';
-import Icon from './Icon';
+import Icon from '../Icon';
 import { setSectionTitle, deleteSection } from '../../redux';
 import { itemEdit, item, target, dragging, deleteIcon } from '../../../styles/sections-popover.css';
 

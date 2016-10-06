@@ -1,5 +1,7 @@
 // @flow
-import { map, findIndex, isEmpty, concat, first, keys, getOr, forEach, get } from 'lodash/fp';
+import {
+  map, findIndex, isEmpty, concat, first, keys, getOr, forEach, get, has, set,
+} from 'lodash/fp';
 import Recora from 'recora';
 import type { State, SectionId, RecoraResult } from '../types';
 import { getAddedChangedRemovedSectionItems } from './util';
@@ -15,13 +17,14 @@ type BatchImplementation = {
   unqueueSection: (sectionId: SectionId) => void,
   addResultListener: (callback: ResultListenerCallback) => void,
 };
-type Result = { input: string, result: RecoraResult };
+type Result = { input: string, result: ?RecoraResult };
 type Fiber = {
   sectionId: SectionId,
   start: number,
   previous: Result[],
   results: Result[],
 };
+type ImmutableConstants = Object;
 
 const getDefaultBatchImpl = ({
   requestIdleCallback = global.requestAnimationFrame,
@@ -32,10 +35,11 @@ const getDefaultBatchImpl = ({
   // Lazy map
   const instancesPerSection: { [key:SectionId]: Recora } = {};
 
-  // Global state
+  // Global state (All objects mutable)
   const queuedInputs: { [key:SectionId]: string[] } = {};
   const previousResultsPerSection: { [key:SectionId]: Result[] } = {};
   const forceRecalculationPerSection: { [key:SectionId]: bool } = {};
+  const constantMapPerSection: { [key:SectionId]: ImmutableConstants } = {};
   let fiber: ?Fiber = null; // Note that all the properties of fiber are mutated in place
   let idleCallback = null;
 
@@ -65,6 +69,26 @@ const getDefaultBatchImpl = ({
     return instance;
   };
 
+  const updateInstanceWithAssignmentResult = (sectionId, instance, result) => {
+    const { identifier, value } = result.value;
+
+    // Ignore subsequent assignments if they type something like, test = 3; test = 4
+    if (has([sectionId, identifier], constantMapPerSection)) return null;
+
+    const constants = set(identifier, value, constantMapPerSection[sectionId]);
+    instance.setConstants(constants);
+    return result;
+  };
+
+  const recalculateSection = (sectionId, start) => {
+    // Recalculate entire section top down
+    // Reset constants, because the updateInstanceWithAssignmentResult will handle them
+    constantMapPerSection[sectionId] = {};
+    forceRecalculationPerSection[sectionId] = true;
+    fiber = generateFiberFor(sectionId, start);
+    performSectionComputation(); // eslint-disable-line
+  };
+
   const performSectionComputation = () => {
     setFiberIfEmpty();
     if (!fiber) return;
@@ -88,14 +112,15 @@ const getDefaultBatchImpl = ({
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
 
-        if (!forceRecalculation && get(['value', 'type'], result) === 'NODE_ASSIGNMENT') {
-          const { identifier, value } = result.value;
-          instance.setConstant(identifier, value);
+        const isAssignment = get(['value', 'type'], result) === 'NODE_ASSIGNMENT';
 
-          forceRecalculationPerSection[sectionId] = true;
-          fiber = generateFiberFor(sectionId, start);
-          performSectionComputation();
-          return;
+        if (isAssignment) {
+          if (!forceRecalculation) {
+            recalculateSection(sectionId, start);
+            return;
+          }
+
+          result = updateInstanceWithAssignmentResult(sectionId, instance, result);
         }
       } else {
         // Exceeded the frame budget, continue in next frame
@@ -110,7 +135,7 @@ const getDefaultBatchImpl = ({
     }
 
     previousResultsPerSection[sectionId] = results;
-    if (sectionId in forceRecalculationPerSection) forceRecalculationPerSection[sectionId] = false;
+    if (forceRecalculationPerSection[sectionId]) forceRecalculationPerSection[sectionId] = false;
 
     const entries = map('result', results);
     const total = instance.parse('');
