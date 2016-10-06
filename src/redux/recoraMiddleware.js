@@ -82,13 +82,11 @@ const getDefaultBatchImpl = ({
 
   let resultListeners = [];
 
-  // Lazy map
-  const instancesPerSection: { [key:SectionId]: Recora } = {};
-
   // Global state (All objects mutable)
   const queuedInputs: { [key:SectionId]: string[] } = {};
   const previousResultsPerSection: { [key:SectionId]: Result[] } = {};
   const constantsPerSection: { [key:SectionId]: ImmutableConstants } = {};
+  const instancesPerSection: { [key:SectionId]: Recora } = {};
   let fiber: ?Fiber<CalculationState> = null;
 
 
@@ -198,6 +196,7 @@ const getDefaultBatchImpl = ({
     delete queuedInputs[sectionId];
     previousResultsPerSection[sectionId] = results;
     constantsPerSection[sectionId] = constants;
+    instancesPerSection[sectionId] = instance;
     fiber = null;
     queueComputation();
   };
