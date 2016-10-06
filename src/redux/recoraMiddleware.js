@@ -18,9 +18,9 @@ type BatchImplementation = {
 type Result = { input: string, result: RecoraResult };
 type Fiber = {
   sectionId: SectionId,
+  start: number,
   previous: Result[],
   results: Result[],
-  start: number,
 };
 
 const getDefaultBatchImpl = ({
@@ -44,7 +44,7 @@ const getDefaultBatchImpl = ({
     const previous = !forceRecalculation
       ? getOr([], sectionId, previousResultsPerSection).slice()
       : [];
-    return { sectionId, previous, results: [], start };
+    return { sectionId, start, previous, results: [] };
   };
 
   const setFiberIfEmpty = () => {
@@ -70,7 +70,7 @@ const getDefaultBatchImpl = ({
     if (!fiber) return;
 
     if (fiber.start === -1) fiber.start = Date.now();
-    const { sectionId, previous, results, start } = fiber;
+    const { sectionId, start, previous, results } = fiber;
     const remainingInputs = queuedInputs[sectionId].slice(results.length);
     const instance = getInstanceFor(sectionId);
 
