@@ -200,15 +200,15 @@ const getDefaultBatchImpl = ({
 
     results = removeDuplicateAssignments(results);
 
-    const newAssignments = flow(
+    const newChangedAssignments = flow(
       getAssignments,
-      filter(assignment => !isEqual(constants[assignment.identifier], assignment.value))
+      filter(({ identifier, value }) => !isEqual(constants[identifier], value))
     )(results);
 
     const removedAssignments = getAssignments(previous);
 
-    if (!isEmpty(newAssignments) || !isEmpty(removedAssignments)) {
-      const newConstants = flow(keyBy('identifier'), mapValues('value'))(newAssignments);
+    if (!isEmpty(newChangedAssignments) || !isEmpty(removedAssignments)) {
+      const newConstants = flow(keyBy('identifier'), mapValues('value'))(newChangedAssignments);
       const removedConstantNames = map('identifier', removedAssignments);
 
       const nextConstants = flow(
