@@ -40,11 +40,16 @@ type CalculationState = {
   instance: Recora,
   constants: Object,
   inputs: string[],
-  previous: Result[],
+  previousResults: Result[],
   results: Result[],
 };
 
 const NODE_ASSIGNMENT = 'NODE_ASSIGNMENT';
+const createReassignmentResult = existingResult => ({
+  ...existingResult,
+  value: null,
+  pretty: `[reassignment of ${existingResult.value.identifier}]`,
+});
 
 const createFiberRunner = ({
   requestIdleCallback = global.requestAnimationFrame,
@@ -96,11 +101,28 @@ const removeDuplicateAssignments = reduce((outputResults, result) => {
   }
 
   const outputResult = isDuplicateAssignment
-    ? { input: result.input, result: null, removedAssignment: result.result }
+    ? {
+      input: result.input,
+      result: createReassignmentResult(result.result),
+      removedAssignment: result.result,
+    }
     : result;
 
   return concat(outputResults, outputResult);
 }, []);
+
+const getStateForRecalculation = (
+  { sectionId, inputs }: CalculationState,
+  constants
+): CalculationState => ({
+  sectionId,
+  forceRecalculation: true,
+  constants,
+  instance: new Recora().setConstants(constants),
+  inputs,
+  previousResults: [],
+  results: [],
+});
 
 const getDefaultBatchImpl = ({
   requestIdleCallback = global.requestAnimationFrame,
@@ -141,7 +163,7 @@ const getDefaultBatchImpl = ({
       instance: getInstanceFor(sectionId),
       constants: getOr({}, sectionId, constantsPerSection),
       inputs: getOr([], sectionId, queuedInputs),
-      previous: getOr([], sectionId, previousResultsPerSection),
+      previousResults: getOr([], sectionId, previousResultsPerSection),
       results: [],
     }: CalculationState));
     /* eslint-enable */
@@ -155,37 +177,24 @@ const getDefaultBatchImpl = ({
     queueComputation();
   };
 
-  const getStateForRecalculation = (
-    { sectionId, inputs }: CalculationState,
-    constants
-  ): CalculationState => ({
-    sectionId,
-    forceRecalculation: true,
-    constants,
-    instance: new Recora().setConstants(constants),
-    inputs,
-    previous: [],
-    results: [],
-  });
-
   const sectionComputation = (state: CalculationState, next) => {
     const { sectionId, forceRecalculation, constants, instance, inputs } = state;
-    let { previous, results } = state;
+    let { previousResults, results } = state;
     const getCurrentState = (): CalculationState =>
-      ({ sectionId, forceRecalculation, instance, constants, inputs, previous, results });
+      ({ sectionId, forceRecalculation, instance, constants, inputs, previousResults, results });
     const remainingInputs = inputs.slice(results.length);
 
     let didPerformExpensiveComputation = false;
 
     for (const input of remainingInputs) {
-      const previousEntryIndex = findIndex({ input }, previous);
+      const previousEntryIndex = findIndex({ input }, previousResults);
 
       let result;
       if (previousEntryIndex !== -1) {
         // Almost free, do even if we've exceeded the frame budget
-        const previousValue = previous[previousEntryIndex];
+        const previousValue = previousResults[previousEntryIndex];
         result = previousValue.removedAssignment || previousValue.result;
-        previous = pullAt(previousEntryIndex, previous);
+        previousResults = pullAt(previousEntryIndex, previousResults);
       } else if (!didPerformExpensiveComputation) {
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
@@ -205,7 +214,7 @@ const getDefaultBatchImpl = ({
       filter(({ identifier, value }) => !isEqual(constants[identifier], value))
     )(results);
 
-    const removedAssignments = getAssignments(previous);
+    const removedAssignments = getAssignments(previousResults);
 
     if (!isEmpty(newChangedAssignments) || !isEmpty(removedAssignments)) {
       const newConstants = flow(keyBy('identifier'), mapValues('value'))(newChangedAssignments);
@@ -237,19 +246,15 @@ const getDefaultBatchImpl = ({
     queueComputation();
   };
 
-  const queueSection = (sectionId, inputs) => {
-    queuedInputs[sectionId] = inputs;
-    resetFiberFor(sectionId);
-  };
-
-  const unqueueSection = (sectionId) => {
-    delete queuedInputs[sectionId];
-    resetFiberFor(sectionId);
-  };
-
   return {
-    queueSection,
-    unqueueSection,
+    queueSection: (sectionId, inputs) => {
+      queuedInputs[sectionId] = inputs;
+      resetFiberFor(sectionId);
+    },
+    unqueueSection: (sectionId) => {
+      delete queuedInputs[sectionId];
+      resetFiberFor(sectionId);
+    },
     addResultListener: callback => {
       resultListeners = concat(resultListeners, callback);
     },

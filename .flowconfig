@@ -1,5 +1,5 @@
 [ignore]
-.*node_modules/react-reorderable.*
+.*node_modules/get-es-imports-exports/.*
 
 [include]
 
