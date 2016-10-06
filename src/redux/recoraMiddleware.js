@@ -74,6 +74,8 @@ const getDefaultBatchImpl = ({
     const remainingInputs = queuedInputs[sectionId].slice(results.length);
     const instance = getInstanceFor(sectionId);
 
+    const forceRecalculation = forceRecalculationPerSection[sectionId];
+
     for (const input of remainingInputs) {
       const previousEntryIndex = findIndex({ input }, previous);
 
@@ -86,8 +88,7 @@ const getDefaultBatchImpl = ({
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
 
-        const isAssignment = get(['value', 'type'], result) === 'NODE_ASSIGNMENT';
-        if (isAssignment && !forceRecalculationPerSection[sectionId]) {
+        if (forceRecalculation && get(['value', 'type'], result) === 'NODE_ASSIGNMENT') {
           const { identifier, value } = result.value;
           instance.setConstant(identifier, value);
 
