@@ -88,7 +88,7 @@ const getDefaultBatchImpl = ({
         // Expensive, don't do if we've exceeded the frame budget
         result = instance.parse(input);
 
-        if (forceRecalculation && get(['value', 'type'], result) === 'NODE_ASSIGNMENT') {
+        if (!forceRecalculation && get(['value', 'type'], result) === 'NODE_ASSIGNMENT') {
           const { identifier, value } = result.value;
           instance.setConstant(identifier, value);
 
