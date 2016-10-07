@@ -10,6 +10,7 @@ import type { PromiseStorage } from './util'; // eslint-disable-line
 import type { State, DocumentId } from '../types';
 
 
+const LOAD_DOCUMENTS = 'persintance-middleware:LOAD_DOCUMENTS';
 const LOAD_DOCUMENT = 'persintance-middleware:LOAD_DOCUMENT';
 
 const sectionTextInputStoragePrefix = 'section';
@@ -110,14 +111,12 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
 
   const doLoadSimpleState = async () => {
     const values = await storage.multiGet(simpleKeys);
-    const patch = flow(
-      zip(simpleKeys),
-      storagePairsToMap
-    )(values);
+    const patch = flow(storagePairsToMap)(values);
     if (!isEmpty(patch)) dispatch(mergeState(patch));
   };
 
   const doLoadDocument = async (documentId, state) => {
+    // FIXME: Don't load if we've already loaded
     const sectionIds = get(['documentSections', documentId], state);
 
     if (!sectionIds) return;
@@ -156,14 +155,13 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
     }
   };
 
-  queueStorageOperation(doLoadSimpleState);
-
-
   return next => (action) => {
     const previousState: State = getState();
     const returnValue = next(action);
 
-    if (action.type === LOAD_DOCUMENT) {
+    if (action.type === LOAD_DOCUMENTS) {
+      queueStorageOperation(doLoadSimpleState);
+    } if (action.type === LOAD_DOCUMENT) {
       doLoadDocument(action.documentId, previousState);
     } else {
       const nextState: State = getState();
@@ -175,5 +173,7 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
   };
 };
 
+export const loadDocuments = () =>
+  ({ type: LOAD_DOCUMENTS });
 export const loadDocument = (documentId: DocumentId) =>
   ({ type: LOAD_DOCUMENT, documentId });

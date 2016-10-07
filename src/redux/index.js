@@ -150,5 +150,5 @@ export const deleteDocument = (documentId: DocumentId) =>
   ({ type: DELETE_DOCUMENT, documentId });
 export const deleteSection = (sectionId: SectionId) =>
   ({ type: DELETE_SECTION, sectionId });
-export { loadDocument } from './persistenceMiddleware';
+export { loadDocuments, loadDocument } from './persistenceMiddleware';
 /* eslint-enable */

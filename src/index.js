@@ -7,7 +7,7 @@ import { Router, Route, IndexRoute, browserHistory } from 'react-router';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { includes } from 'lodash/fp';
-import reducer, { loadDocument } from './redux';
+import reducer, { loadDocuments, loadDocument } from './redux';
 import persistenceMiddleware from './redux/persistenceMiddleware';
 import recoraMiddleware from './redux/recoraMiddleware';
 import DocumentList from './components/DocumentList';
@@ -43,6 +43,8 @@ const onEnterDocument = (state) => {
     history.push('/');
   }
 };
+
+store.dispatch(loadDocuments());
 
 store.subscribe(() => {
   if (documentId) return;
