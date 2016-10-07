@@ -5,7 +5,7 @@ import {
 } from 'lodash/fp';
 import { debounce } from 'lodash';
 import { getAddedChangedRemovedSectionItems, getPromiseStorage } from './util';
-import { mergeState } from '.';
+import { mergeState } from './index';
 import type { PromiseStorage } from './util'; // eslint-disable-line
 import type { State, DocumentId } from '../types';
 
@@ -127,10 +127,7 @@ export default (storage: PromiseStorage = getPromiseStorage()): any => ({ getSta
     const allKeys = concat(sectionStorageKeys, sectionPreviewStorageKeys);
     const allValues = await storage.multiGet(allKeys);
 
-    const allMap = flow(
-      zip(allKeys),
-      storagePairsToMap
-    )(allValues);
+    const allMap = storagePairsToMap(allValues);
 
     const sectionTextInputs = flow(
       pick(sectionStorageKeys),

@@ -37,7 +37,7 @@ export const getPromiseStorage = (): PromiseStorage => ({
   getItem: key =>
     Promise.resolve(global.localStorage.getItem(key)),
   multiGet: keys =>
-    Promise.resolve(map(key => global.localStorage.getItem(key), keys)),
+    Promise.resolve(map(key => [key, global.localStorage.getItem(key)], keys)),
   setItem: (key, value) =>
     Promise.resolve(global.localStorage.setItem(key, value)),
   multiSet: pairs =>
