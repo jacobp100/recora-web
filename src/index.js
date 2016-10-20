@@ -8,6 +8,8 @@ import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { includes } from 'lodash/fp';
 import reducer, { loadDocuments, loadDocument } from './redux';
+import cacheInvalidationMiddleware from './redux/cacheInvalidationMiddleware';
+import currencyUpdaterMiddleware from './redux/currencyUpdaterMiddleware';
 import persistenceMiddleware from './redux/persistenceMiddleware';
 import recoraMiddleware from './redux/recoraMiddleware';
 import DocumentList from './components/DocumentList';
@@ -15,6 +17,8 @@ import DocumentView from './components/DocumentView';
 import type { DocumentId } from './types';
 
 const middlewares = applyMiddleware(
+  cacheInvalidationMiddleware(),
+  currencyUpdaterMiddleware(),
   persistenceMiddleware(),
   recoraMiddleware(),
 );

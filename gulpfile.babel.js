@@ -28,6 +28,7 @@ gulp.task('icons', () => {
       'pe-7s-angle-left',
       'pe-7s-config',
       'pe-7s-file',
+      'pe-7s-help1',
       'pe-7s-notebook',
       'pe-7s-print',
       'pe-7s-share',

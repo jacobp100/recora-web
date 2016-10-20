@@ -23,7 +23,8 @@
     "recora": "0.1.0",
     "redux": "^3.3.1",
     "redux-thunk": "^2.1.0",
-    "state-transitions": "^2.1.2"
+    "state-transitions": "^2.1.2",
+    "uuid": "^2.0.3"
   },
   "devDependencies": {
     "autoprefixer": "^6.5.0",
