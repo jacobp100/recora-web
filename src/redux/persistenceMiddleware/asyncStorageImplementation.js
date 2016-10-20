@@ -48,14 +48,16 @@ const getSectionStorageKeyMap = (storageOperation: StorageOperation) => {
   return assign(previousSectionStorageKeyMap, nextSectionStorageKeyMap);
 };
 
-const getStorageLocation = (storageOperation, sectionStorageKeyMap): LocalStorageLocation => ({
-  type: STORAGE_LOCAL,
-  title: storageOperation.title,
-  sectionStorageKeys: flow(
-    map('id'),
-    map(propertyOf(sectionStorageKeyMap))
-  )(storageOperation.document.sections),
-});
+const getStorageLocation = (storageOperation, sectionStorageKeyMap): ?LocalStorageLocation => (
+  storageOperation.action === STORAGE_ACTION_REMOVE ? null : {
+    type: STORAGE_LOCAL,
+    title: storageOperation.title,
+    sectionStorageKeys: flow(
+      map('id'),
+      map(propertyOf(sectionStorageKeyMap))
+    )(storageOperation.document.sections),
+  }
+);
 
 const getStoragePairs = flow(
   mapValues(JSON.stringify),

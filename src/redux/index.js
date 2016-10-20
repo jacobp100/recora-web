@@ -1,8 +1,8 @@
 // @flow
 import {
   __, get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
-  over, uniqueId, includes, isNull, propertyOf, map, intersection, sample, omit, mergeWith, omitBy,
-  isPlainObject, fromPairs, zip, assign,
+  over, uniqueId, includes, isNull, propertyOf, map, intersection, sample, omit, omitBy, fromPairs,
+  zip, assign,
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
 import { append } from '../util';
@@ -27,9 +27,9 @@ const defaultState: State = {
   loadedDocuments: [],
 };
 
-const MERGE_STATE = 'recora:MERGE_STATE';
 const SET_DOCUMENTS = 'recora:SET_DOCUMENTS';
 const SET_DOCUMENT = 'recora:SET_DOCUMENT';
+const UPDATE_DOCUMENT_STORAGE_LOCATIONS = 'recora:UPDATE_DOCUMENT_STORAGE_LOCATIONS';
 const ADD_DOCUMENT = 'recora:ADD_DOCUMENT';
 const SET_DOCUMENT_TITLE = 'recora:SET_DOCUMENT_TITLE';
 const REORDER_DOCUMENTS = 'recora:REORDER_DOCUMENTS';
@@ -93,7 +93,8 @@ const doDeleteDocument = curry((documentId, state) => flow(
     get(['documentSections', documentId], state)
   ),
   removeIdWithinKeys(documentKeys, documentId),
-  update('documents', without([documentId]))
+  update('documents', without([documentId])),
+  update('loadedDocuments', without([documentId]))
 )(state));
 
 const doAddSection = curry((documentId, state) => {
@@ -110,17 +111,8 @@ const doAddSection = curry((documentId, state) => {
 });
 
 
-const mergeImplementation = (oldValue, newValue) => {
-  if (isPlainObject(oldValue)) {
-    return omitBy(isNull, mergeWith(mergeImplementation, oldValue, newValue));
-  }
-  return newValue;
-};
-
 export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
-    case MERGE_STATE:
-      return mergeWith(mergeImplementation, state, action.state);
     case SET_DOCUMENTS: {
       const documentIds = map(() => uniqueId(), action.documents);
       const documentStorageLocations = fromPairs(zip(documentIds, action.documents));
@@ -149,6 +141,11 @@ export default (state: State = defaultState, action: Object): State => {
         update('sectionTextInputs', assign(__, sectionTextInputs))
       )(state);
     }
+    case UPDATE_DOCUMENT_STORAGE_LOCATIONS:
+      return update('documentStorageLocations', flow(
+        assign(__, action.documentStorageLocations),
+        omitBy(isNull)
+      ), state);
     case ADD_DOCUMENT: {
       const id = uniqueId();
       const title = 'New Document';
@@ -228,12 +225,12 @@ export default (state: State = defaultState, action: Object): State => {
 };
 
 /* eslint-disable max-len */
-export const mergeState = (state: Object) =>
-  ({ type: MERGE_STATE, state });
 export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });
 export const setDocument = (documentId: DocumentId, document: Document) =>
   ({ type: SET_DOCUMENT, documentId, document });
+export const updateDocumentStorageLocations = (documentStorageLocations: Object) =>
+  ({ type: UPDATE_DOCUMENT_STORAGE_LOCATIONS, documentStorageLocations });
 export const addDocument = () =>
   ({ type: ADD_DOCUMENT });
 export const setDocumentTitle = (documentId: DocumentId, title: string) =>
