@@ -162,9 +162,8 @@ const storageModes = {
 
 export default (storage: PromiseStorage): StorageInterface => {
   const loadDocument = async (storageLocation: LocalStorageLocation): Document => {
-    const sectionPairs = await storage.getItems(storageLocation.sectionStorageKeys);
-    // Get correct ids
-    const sections = map(pair => pair[1], sectionPairs);
+    const sectionPairs = await storage.multiGet(storageLocation.sectionStorageKeys);
+    const sections = map(pair => JSON.parse(pair[1]), sectionPairs);
     const document = {
       id: null,
       title: storageLocation.title,
@@ -203,7 +202,7 @@ export default (storage: PromiseStorage): StorageInterface => {
   };
 
   return {
-    type: 'local',
+    type: STORAGE_LOCAL,
     delay: 1000,
     maxWait: 2000,
     loadDocument,

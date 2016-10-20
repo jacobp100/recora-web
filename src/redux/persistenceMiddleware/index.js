@@ -2,7 +2,7 @@
 import {
   __, isEqual, some, get, isEmpty, filter, difference, intersection, every, overSome, propertyOf,
   forEach, mapValues, curry, keys, keyBy, map, concat, fromPairs, zip, flow, assign, pick, omit,
-  overEvery, has,
+  overEvery, has, includes,
 } from 'lodash/fp';
 import { debounce } from 'lodash';
 import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE } from '../../types';
@@ -70,9 +70,10 @@ const getDocumentFromState = curry((state: State, documentId: DocumentId): ?Docu
 const documentKeysToPersist = ['documentTitles', 'documentSections'];
 const sectionKeysToPersist = ['sectionTitles', 'sectionTextInputs'];
 
-const documentsForType = (state, storageType) => filter(documentId => (
-  get(['documentStorageLocations', documentId, 'type'], state) === storageType
-), state.documents);
+const loadedDocumentsForType = (state, storageType) => flow(
+  filter(id => get(['documentStorageLocations', id, 'type'], state) === storageType),
+  filter(id => includes(id, state.loadedDocuments))
+)(state.documents);
 
 const addedDocuments = (
   nextState,
@@ -80,8 +81,9 @@ const addedDocuments = (
   nextDocuments,
   previousDocuments
 ) => {
-  const documentWasAdded = documentId => !(documentId in previousState.documentStorageLocations);
-  return filter(documentWasAdded, difference(nextDocuments, previousDocuments));
+  // Document wasn't loaded via loadDocuments
+  const documentIsNew = documentId => !(documentId in previousState.documentStorageLocations);
+  return filter(documentIsNew, difference(nextDocuments, previousDocuments));
 };
 
 const removedDocuments = (
@@ -125,9 +127,9 @@ const noChangeInDocuments = overEvery([
 
 const addedRemovedChangedArgsForType = (nextState, previousState, storageType) => {
   const previousDocumentsForStorageType =
-    documentsForType(previousState, storageType);
+    loadedDocumentsForType(previousState, storageType);
   const nextDocumentsForStorageType =
-    documentsForType(nextState, storageType);
+    loadedDocumentsForType(nextState, storageType);
 
   const args = [
     nextState,
@@ -199,10 +201,14 @@ export default (
       storageImplementation.loadDocument(storageLocation)
     ));
 
-    lastDocumentById[documentId] = document;
-    dispatch(setDocument(document));
+    // document is sent without ids, and when we dispatch setDocument, they are set
+    dispatch(setDocument(documentId, document));
 
-    return document;
+    // Reconstruct the document from the state to get a document with ids
+    const documentWithFixedIds = getDocumentFromState(getState(), documentId);
+    lastDocumentById[documentId] = documentWithFixedIds;
+
+    return documentWithFixedIds;
   };
 
   const doLoadDocumentsList = async () => {
@@ -217,10 +223,6 @@ export default (
     const documentRecords = map(propertyOf(documentStorageLocations), documents);
     await storage.setItem(documentsStorageKey, JSON.stringify(documentRecords));
   };
-
-  const queueSaveDocumentsList = debounce(() => {
-    queueStorageOperation(doSaveDocumentsList);
-  }, 1000, { maxWait: 2000 });
 
   const doUpdateStorageImplementation = async (storageType) => {
     const lastState = lastStatePerStorageType[storageType];
@@ -279,6 +281,8 @@ export default (
         const patch = { documentStorageLocations: storageLocationPatch };
 
         dispatch(mergeState(patch));
+
+        if (documentsListNeedsUpdating(getState(), currentState)) await doSaveDocumentsList();
       }
     } catch (e) {
       // leave lastStatePerStorageType so we can pick up from there
@@ -311,8 +315,6 @@ export default (
     if (action.type === LOAD_DOCUMENTS) return queueStorageOperation(doLoadDocumentsList);
 
     const nextState: State = getState();
-
-    if (documentsListNeedsUpdating(nextState, previousState)) queueSaveDocumentsList();
 
     const storageTypesWithChanges = filter(
       hasDocumentChangesForStorageType(nextState, previousState),

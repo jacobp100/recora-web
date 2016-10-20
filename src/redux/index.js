@@ -138,8 +138,8 @@ export default (state: State = defaultState, action: Object): State => {
 
       const { title, sections } = document;
       const sectionIds = map(() => uniqueId(), sections);
-      const sectionTitles = fromPairs(zip(sectionIds, sections.titles));
-      const sectionTextInputs = fromPairs(zip(sectionIds, sections.textInputs));
+      const sectionTitles = fromPairs(zip(sectionIds, map('title', sections)));
+      const sectionTextInputs = fromPairs(zip(sectionIds, map('textInputs', sections)));
 
       return flow(
         update('loadedDocuments', append(documentId)),
@@ -153,6 +153,7 @@ export default (state: State = defaultState, action: Object): State => {
       const id = uniqueId();
       const title = 'New Document';
       return flow(
+        update('loadedDocuments', append(id)),
         update('documents', concat(id)),
         set(['documentTitles', id], title),
         set(['documentStorageLocations', id], {
@@ -231,8 +232,8 @@ export const mergeState = (state: Object) =>
   ({ type: MERGE_STATE, state });
 export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });
-export const setDocument = (documentId: DocumentId, document: Document[]) =>
-  ({ type: SET_DOCUMENTS, documentId, document });
+export const setDocument = (documentId: DocumentId, document: Document) =>
+  ({ type: SET_DOCUMENT, documentId, document });
 export const addDocument = () =>
   ({ type: ADD_DOCUMENT });
 export const setDocumentTitle = (documentId: DocumentId, title: string) =>
