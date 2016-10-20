@@ -219,7 +219,6 @@ export default (
   };
 
   const doSaveDocumentsList = async () => {
-    console.log('s');
     const { documents, documentStorageLocations } = getState();
     const documentRecords = map(propertyOf(documentStorageLocations), documents);
     await storage.setItem(documentsStorageKey, JSON.stringify(documentRecords));
