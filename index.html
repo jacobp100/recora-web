@@ -1,38 +1,33 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Recora</title>
-    <link href="https://fonts.googleapis.com/css?family=Lato:400,300,100,700,900" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,800,700,600,300" rel="stylesheet" type="text/css">
-    <link href="dist/style.css" rel="stylesheet" />
-    <style>
-      @font-face {
-      	font-family: 'Open Sans Blank';
-      	font-style: normal;
-      	font-weight: 300;
-      	src: url('fonts/OpenSans-Light-Blank.ttf') format('truetype');
-      }
+<meta charset="utf-8">
+<title>Recora</title>
+<link href="https://fonts.googleapis.com/css?family=Lato:400,300,100,700,900" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,800,700,600,300" rel="stylesheet" type="text/css">
+<link href="dist/style.css" rel="stylesheet" />
+<style>
+  @font-face {
+    font-family: 'Open Sans Blank';
+    font-style: normal;
+    font-weight: 300;
+    src: url('fonts/OpenSans-Light-Blank.ttf') format('truetype');
+  }
 
-      body {
-        margin: 0;
-        background: #000;
-        font: 400 12pt 'Lato', 'sans-serif';
-      }
+  body {
+    margin: 0;
+    background: #000;
+    font: 400 12pt 'Lato', 'sans-serif';
+  }
 
-      .loading {
-        font-weight: 100;
-        font-size: 3.375em;
-        text-align: center;
-        margin-top: 3.375em;
-        color: white;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="main">
-      <h1 class="loading">Loading&hellip;</h1>
-    </div>
-    <script src="dist/recora-app.js"></script>
-  </body>
-</html>
+  .loading {
+    font-weight: 100;
+    font-size: 3.375em;
+    text-align: center;
+    margin-top: 3.375em;
+    color: white;
+  }
+</style>
+<div id="main">
+  <h1 class="loading">Loading&hellip;</h1>
+</div>
+<script src="https://cdn.polyfill.io/v2/polyfill.js?features=fetch|gated"></script>
+<script src="dist/recora-app.js"></script>

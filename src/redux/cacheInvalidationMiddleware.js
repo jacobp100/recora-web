@@ -1,7 +1,7 @@
 // @flow
-import { getOr, without, flow, values, flatten, any, isEqual } from 'lodash/fp';
+import { without, any, isEqual } from 'lodash/fp';
 import type { State, DocumentId } from '../types';
-import { unloadSections } from './index';
+import { unloadDocuments } from './index';
 
 const SET_ACTIVE_DOCUMENT = 'cache-invalidation-middleware:SET_ACTIVE_DOCUMENT';
 
@@ -12,13 +12,8 @@ const cacheKeys = [
 export default () => ({ getState, dispatch }) => {
   let activeDocument: ?DocumentId = null;
 
-  const getInactiveSections = (state) => {
-    if (!activeDocument) return [];
-    const sectionsInActiveDocument = getOr([], ['documentSections', activeDocument], state);
-    const allSections = flow(values, flatten)(state.documentSections);
-    const inactiveSections = without(sectionsInActiveDocument, allSections);
-    return inactiveSections;
-  };
+  const getInactiveDocuments = (state) =>
+    (activeDocument ? without([activeDocument], state.documents) : []);
 
   return next => (action) => {
     const previousState: State = getState();
@@ -28,7 +23,7 @@ export default () => ({ getState, dispatch }) => {
     if (action.type === SET_ACTIVE_DOCUMENT) {
       activeDocument = action.documentId;
     } else if (any(key => !isEqual(nextState[key], previousState[key]), cacheKeys)) {
-      dispatch(unloadSections(getInactiveSections(nextState)));
+      dispatch(unloadDocuments(getInactiveDocuments(nextState)));
     }
 
     return returnValue;

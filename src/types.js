@@ -15,9 +15,17 @@ export type State = {
 
 export type StorageType = string;
 export const STORAGE_LOCAL: StorageType = 'local';
+export const STORAGE_DROPBOX: StorageType = 'dropbox';
+
 export type StorageLocation = { title: string, type: StorageType };
+
 export type LocalStorageLocation = StorageLocation & { sectionStorageKeys: string[] };
-export type RemoteStorageLocation = StorageLocation & { userId: string, path: string };
+
+export type StorageAccount = string;
+export type RemoteStorageLocation = StorageLocation & { account: StorageAccount };
+export type DropBoxStorageBase = { path: string, rev: string };
+export type DropBoxStorageLocation = RemoteStorageLocation & DropBoxStorageBase;
+
 // Section:id and Document:id should only be used for diffing, and nothing else
 // The ids are not persisted between saves
 export type Section = {

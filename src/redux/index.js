@@ -2,11 +2,11 @@
 import {
   __, get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
   over, uniqueId, includes, isNull, propertyOf, map, intersection, sample, omit, omitBy, fromPairs,
-  zip, assign,
+  zip, assign, flatMap, getOr,
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
 import { append } from '../util';
-import { STORAGE_LOCAL } from '../types';
+import { STORAGE_LOCAL, STORAGE_DROPBOX } from '../types';
 import type { // eslint-disable-line
   StorageLocation, Document, State, SectionId, DocumentId, RecoraResult,
 } from '../types';
@@ -21,10 +21,19 @@ const defaultState: State = {
   sectionTextInputs: {},
   sectionResults: {},
   sectionTotals: {},
-  quickCalculationInput: '',
-  quickCalculationResult: { text: '' },
   customUnits: {},
   loadedDocuments: [],
+
+  quickCalculationInput: '',
+  quickCalculationResult: { text: '' },
+
+  accounts: ['dr1'],
+  accountTokens: {
+    dr1: '',
+  },
+  accountNames: {
+    dr1: 'DropBox',
+  },
 };
 
 const SET_DOCUMENTS = 'recora:SET_DOCUMENTS';
@@ -45,7 +54,7 @@ const SET_QUICK_CALCULATION_INPUT = 'recora:SET_QUICK_CALCULATION_INPUT';
 const GET_QUICK_CALCULATION_EXAMPLE = 'recora:GET_QUICK_CALCULATION_EXAMPLE';
 const SET_QUICK_CALCULATION_RESULT = 'recora:SET_QUICK_CALCULATION_RESULT';
 const SET_CUSTOM_UNITS = 'recora:SET_CUSTOM_UNITS';
-const UNLOAD_SECTIONS = 'recora:UNLOAD_SECTIONS';
+const UNLOAD_DOCUMENTS = 'recora:UNLOAD_DOCUMENTS';
 
 const getExistingIds = flow(
   over([
@@ -141,6 +150,17 @@ export default (state: State = defaultState, action: Object): State => {
         update('sectionTextInputs', assign(__, sectionTextInputs))
       )(state);
     }
+    case UNLOAD_DOCUMENTS: {
+      const { documentIds } = state;
+      const sectionsIds = flatMap(documentId => (
+        getOr([], ['documentSections', documentId], state)
+      ), documentIds);
+
+      return flow(
+        update('loadedDocuments', without(documentIds)),
+        update('sectionTextInputs', omit(sectionsIds))
+      )(state);
+    }
     case UPDATE_DOCUMENT_STORAGE_LOCATIONS:
       return update('documentStorageLocations', flow(
         assign(__, action.documentStorageLocations),
@@ -155,8 +175,12 @@ export default (state: State = defaultState, action: Object): State => {
         set(['documentTitles', id], title),
         set(['documentStorageLocations', id], {
           title,
-          type: STORAGE_LOCAL,
-          sectionStorageKeys: [],
+          // type: STORAGE_LOCAL,
+          // sectionStorageKeys: [],
+          account: 'dr1',
+          type: STORAGE_DROPBOX,
+          path: '/test.recora.md',
+          rev: '',
         }),
         doAddSection(id)
       )(state);
@@ -217,8 +241,6 @@ export default (state: State = defaultState, action: Object): State => {
       return set('quickCalculationResult', action.quickCalculationResult, state);
     case SET_CUSTOM_UNITS:
       return set('customUnits', action.customUnits, state);
-    case UNLOAD_SECTIONS:
-      return update('sectionTextInputs', omit(action.sectionIds), state);
     default:
       return state;
   }
@@ -229,6 +251,8 @@ export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });
 export const setDocument = (documentId: DocumentId, document: Document) =>
   ({ type: SET_DOCUMENT, documentId, document });
+export const unloadDocuments = (documentIds: DocumentId) =>
+  ({ type: UNLOAD_DOCUMENTS, documentIds });
 export const updateDocumentStorageLocations = (documentStorageLocations: Object) =>
   ({ type: UPDATE_DOCUMENT_STORAGE_LOCATIONS, documentStorageLocations });
 export const addDocument = () =>
@@ -261,8 +285,6 @@ export const setQuickCalculationResult = (quickCalculationResult: RecoraResult) 
   ({ type: SET_QUICK_CALCULATION_RESULT, quickCalculationResult });
 export const setCustomUnits = (customUnits: Object) =>
   ({ type: SET_CUSTOM_UNITS, customUnits });
-export const unloadSections = (sectionIds: SectionId) =>
-  ({ type: UNLOAD_SECTIONS, sectionIds });
 export { loadDocuments, loadDocument } from './persistenceMiddleware';
 export { setActiveDocument } from './cacheInvalidationMiddleware';
 /* eslint-enable */

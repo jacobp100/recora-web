@@ -1,21 +1,20 @@
 // @flow
-import { map, reduce, startsWith, update, set, flow, trim, isEmpty, filter } from 'lodash/fp';
+import { map, reduce, startsWith, update, set, trim, isEmpty, assign } from 'lodash/fp';
 import { append } from '../../util';
-import { STORAGE_ACTION_SAVE } from '../../types';
+import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE } from '../../types';
 import type { Document, Section, StorageInterface, RemoteStorageLocation } from '../../types'; // eslint-disable-line
 
 
 const sectionToString = (section: Section) => {
   const titleString = `## ${section.title}\n`;
   const textInputStrings = map(input => `> ${input}\n`, section.textInputs);
-  return [titleString, ...textInputStrings].join('');
+  return [titleString, ...textInputStrings].join('\n');
 };
 
 const documentToString = (document: Document) => {
   const titleString = `# ${document.title}\n`;
   const sectionStrings = map(sectionToString, document.sections);
-
-  [titleString, ...sectionStrings].join('\n');
+  return [titleString, ...sectionStrings].join('\n');
 };
 
 const parseDocumentString = (string: string) => reduce((document, line) => {
@@ -51,20 +50,27 @@ export default (type, remote): StorageInterface => {
     return document;
   };
 
-  const updateStore = flow(
-    // Ignore remove actions
-    filter({ type: STORAGE_ACTION_SAVE }),
-    map(({ document, storageLocation }) => remote.post(
-      documentToString(document),
-      storageLocation.userId,
-      storageLocation.path
-    )),
-    fetchRequests => Promise.all(fetchRequests)
-  );
+  const storageModes = {
+    [STORAGE_ACTION_SAVE]: (token, document, storageLocation) =>
+      remote.post(token, storageLocation, documentToString(document))
+        .then(assign({ type, title: document.title, account: storageLocation.account })),
+    [STORAGE_ACTION_REMOVE]: (token, document, storageLocation) =>
+      remote.delete(token, storageLocation)
+        .then(() => null),
+  };
+
+  const updateStore = (storageOps, tokens) => {
+    const promises = map(({ action, document, storageLocation }) => (
+      storageModes[action](tokens[storageLocation.account], document, storageLocation)
+    ), storageOps);
+
+    return Promise.all(promises);
+  };
 
   return {
     type,
-    delay: 15000,
+    // delay: 15000,
+    delay: 1000,
     maxWait: 30000,
     loadDocument,
     updateStore,

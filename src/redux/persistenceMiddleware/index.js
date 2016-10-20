@@ -9,6 +9,7 @@ import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE } from '../../types';
 import { updateDocumentStorageLocations, setDocuments, setDocument } from '../index';
 import { getPromiseStorage } from './promiseStorage';
 import asyncStorageImplementation from './asyncStorageImplementation';
+import dropboxStorageImplementation from './dropboxStorageImplementation';
 import type { // eslint-disable-line
   State, DocumentId, Document, StorageType, StorageAction, StorageOperation,
 } from '../../types';
@@ -164,10 +165,10 @@ const getChangedDocumentsForStorageType = (
   };
 };
 
-export default (
-  storage = getPromiseStorage(),
-  storageImplementations = [asyncStorageImplementation(storage)]
-): any => ({ getState, dispatch }) => {
+export default (storage = getPromiseStorage(), storageImplementations = [
+  asyncStorageImplementation(storage),
+  dropboxStorageImplementation(),
+]): any => ({ getState, dispatch }) => {
   const storages = keyBy('type', storageImplementations);
   const storageTypes = keys(storages);
 
@@ -225,6 +226,7 @@ export default (
   };
 
   const doUpdateStorageImplementation = async (storageType) => {
+    console.log('UPDATE', storageType);
     const lastState = lastStatePerStorageType[storageType];
     const currentState = getState();
 
@@ -262,7 +264,7 @@ export default (
 
     try {
       const storageLocations = !isEmpty(storageOperations)
-        ? await storages[storageType].updateStore(storageOperations)
+        ? await storages[storageType].updateStore(storageOperations, currentState.accountTokens)
         : null;
 
       lastDocumentById = flow(
