@@ -3,7 +3,7 @@
 import 'babel-regenerator-runtime';
 import { render } from 'react-dom';
 import React from 'react';
-import { Router, Route, IndexRoute, browserHistory } from 'react-router';
+import { Router, Route, IndexRoute, hashHistory } from 'react-router';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { includes } from 'lodash/fp';
@@ -27,7 +27,7 @@ const store = createStore(
   middlewares,
 );
 
-const history = browserHistory;
+const history = hashHistory;
 let documentId: ?DocumentId = null;
 
 const onEnterDocumentList = () => {

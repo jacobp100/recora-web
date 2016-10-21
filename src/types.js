@@ -17,14 +17,23 @@ export type StorageType = string;
 export const STORAGE_LOCAL: StorageType = 'local';
 export const STORAGE_DROPBOX: StorageType = 'dropbox';
 
-export type StorageLocation = { title: string, type: StorageType };
+export type StorageAccountId = string;
+export type StorageAccount = {
+  id: StorageAccountId,
+  type: StorageType,
+  name: string,
+  token: ?string,
+}
 
-export type LocalStorageLocation = StorageLocation & { sectionStorageKeys: string[] };
+export type StorageLocation = {
+  accountId: StorageAccountId,
+  title: string,
+  lastModified: number,
+};
 
-export type StorageAccount = string;
-export type RemoteStorageLocation = StorageLocation & { account: StorageAccount };
+export type LocalStorageLocation = StorageLocation & { storageKey: string };
 export type DropBoxStorageBase = { path: string, rev: string };
-export type DropBoxStorageLocation = RemoteStorageLocation & DropBoxStorageBase;
+export type DropBoxStorageLocation = StorageLocation & DropBoxStorageBase;
 
 // Section:id and Document:id should only be used for diffing, and nothing else
 // The ids are not persisted between saves
@@ -43,7 +52,7 @@ export const STORAGE_ACTION_SAVE: StorageAction = 'STORAGE_ACTION_SAVE';
 export const STORAGE_ACTION_REMOVE: StorageAction = 'STORAGE_ACTION_REMOVE';
 export type StorageOperotaion = {
   action: StorageAction,
-  storageLocation: StorageLocation,
+  storageLocation: ?StorageLocation,
   document: Document, // If STORAGE_ACTION_REMOVE, document === previousDocument
   previousDocument: ?Document,
   lastRejection: any,
@@ -52,6 +61,7 @@ export type StorageInterface = {
   type: StorageType,
   delay: Number,
   maxWait: Number,
-  loadDocument: (storageLocation: StorageLocation, lastRejection: any) => Promise<Document>,
-  updateStore: (storageOperations: StorageOperotaion[]) => Promise<(?StorageLocation)[]>,
+  loadDocuments: (state: State) => Promise<StorageLocation[]>,
+  loadDocument: (location: StorageLocation, state: State) => Promise<Document>,
+  updateStore: (operations: StorageOperotaion[], state: State) => Promise<(?StorageLocation)[]>,
 };

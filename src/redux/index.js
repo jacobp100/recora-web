@@ -1,14 +1,14 @@
 // @flow
 import {
-  __, get, set, unset, concat, update, mapValues, without, reduce, curry, flow, values, flatten,
-  over, uniqueId, includes, isNull, propertyOf, map, intersection, sample, omit, omitBy, fromPairs,
-  zip, assign, flatMap, getOr,
+  __, get, set, unset, concat, update, mapValues, without, reduce, assign, flow, includes, flatMap,
+  propertyOf, map, intersection, sample, omit, omitBy, zip, curry, fromPairs, getOr, isNull, union,
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
-import { append } from '../util';
+import { append, getOrThrow } from '../util';
 import { STORAGE_LOCAL, STORAGE_DROPBOX } from '../types';
 import type { // eslint-disable-line
-  StorageLocation, Document, State, SectionId, DocumentId, RecoraResult,
+  StorageLocation, Document, State, SectionId, DocumentId, RecoraResult, StorageAccount,
+  StorageAccountId,
 } from '../types';
 
 
@@ -27,15 +27,47 @@ const defaultState: State = {
   quickCalculationInput: '',
   quickCalculationResult: { text: '' },
 
-  accounts: ['dr1'],
+  // Accounts should be uuids or something
+  accounts: [
+    'localStorage',
+    'dr1',
+  ],
+  accountTypes: {
+    localStorage: STORAGE_LOCAL,
+    dr1: STORAGE_DROPBOX,
+  },
   accountTokens: {
+    localStorage: '',
     dr1: '',
   },
   accountNames: {
+    localStorage: 'Local',
     dr1: 'DropBox',
   },
 };
 
+export const getAccount = curry((state: State, accountId: StorageAccountId): StorageAccount => ({
+  id: accountId,
+  type: state.accountTypes[accountId],
+  token: state.accountTokens[accountId],
+  name: state.accountNames[accountId],
+}));
+
+export const getAccounts = (state: State): StorageAccount[] =>
+  map(getAccount(state), state.accounts);
+
+export const getDocument = curry((state: State, documentId: DocumentId): Document => ({
+  id: documentId,
+  title: state.documentTitles[documentId],
+  sections: map(sectionId => ({
+    id: sectionId,
+    title: getOrThrow(['sectionTitles', sectionId], state),
+    textInputs: getOrThrow(['sectionTextInputs', sectionId], state),
+  }), state.documentSections[documentId]),
+}));
+
+
+const SET_ACCOUNTS = 'recora:SET_ACCOUNTS';
 const SET_DOCUMENTS = 'recora:SET_DOCUMENTS';
 const SET_DOCUMENT = 'recora:SET_DOCUMENT';
 const UPDATE_DOCUMENT_STORAGE_LOCATIONS = 'recora:UPDATE_DOCUMENT_STORAGE_LOCATIONS';
@@ -56,21 +88,18 @@ const SET_QUICK_CALCULATION_RESULT = 'recora:SET_QUICK_CALCULATION_RESULT';
 const SET_CUSTOM_UNITS = 'recora:SET_CUSTOM_UNITS';
 const UNLOAD_DOCUMENTS = 'recora:UNLOAD_DOCUMENTS';
 
-const getExistingIds = flow(
-  over([
-    get('documents'),
-    flow(get('documentSections'), values, flatten),
-  ]),
-  flatten,
-);
-const newId = (identifier, state) => {
-  const existingIds = getExistingIds(state);
-  let id;
-  do {
-    id = uniqueId(`${identifier}-`);
-  } while (includes(id, existingIds));
-  return id;
+// When using an object with zero-based integer ids ({ 0: value, 1: value } etc), you get fast
+// array access. Until you delete documents or sections, this method will give fast access.
+const idCreator = () => {
+  let i = 0;
+  return () => {
+    const out = i;
+    i += 1;
+    return String(out);
+  };
 };
+const createDocumentId = idCreator();
+const createSectionId = idCreator();
 
 const removeIdWithinKeys = curry((keysToUpdate, idToRemove, state) => reduce(
   (state, keyToUpdate) => unset([keyToUpdate, idToRemove], state),
@@ -107,7 +136,7 @@ const doDeleteDocument = curry((documentId, state) => flow(
 )(state));
 
 const doAddSection = curry((documentId, state) => {
-  const sectionId = newId('section');
+  const sectionId = createSectionId();
   return flow(
     update(['documentSections', documentId], append(sectionId)),
     state => set(
@@ -122,12 +151,22 @@ const doAddSection = curry((documentId, state) => {
 
 export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
+    case SET_ACCOUNTS: {
+      const accountIds = map('id', action.accounts);
+      const accounts = fromPairs(zip(accountIds, action.accounts));
+      return flow(
+        set('accounts'),
+        update('accountTypes', assign(__, mapValues('type', accounts))),
+        update('accountTokens', assign(__, mapValues('token', accounts))),
+        update('accountNames', assign(__, mapValues('name', accounts)))
+      )(state);
+    }
     case SET_DOCUMENTS: {
-      const documentIds = map(() => uniqueId(), action.documents);
+      const documentIds = map(createDocumentId, action.documents);
       const documentStorageLocations = fromPairs(zip(documentIds, action.documents));
       const documentTitles = mapValues('title', documentStorageLocations);
       return flow(
-        set('documents', documentIds),
+        update('documents', union(documentIds)),
         update('documentStorageLocations', assign(__, documentStorageLocations)),
         update('documentTitles', assign(__, documentTitles))
       )(state);
@@ -138,7 +177,7 @@ export default (state: State = defaultState, action: Object): State => {
       if (includes(documentId, state.loadedDocuments)) return state;
 
       const { title, sections } = document;
-      const sectionIds = map(() => uniqueId(), sections);
+      const sectionIds = map(createSectionId, sections);
       const sectionTitles = fromPairs(zip(sectionIds, map('title', sections)));
       const sectionTextInputs = fromPairs(zip(sectionIds, map('textInputs', sections)));
 
@@ -167,7 +206,7 @@ export default (state: State = defaultState, action: Object): State => {
         omitBy(isNull)
       ), state);
     case ADD_DOCUMENT: {
-      const id = uniqueId();
+      const id = createDocumentId();
       const title = 'New Document';
       return flow(
         update('loadedDocuments', append(id)),
@@ -247,6 +286,8 @@ export default (state: State = defaultState, action: Object): State => {
 };
 
 /* eslint-disable max-len */
+export const setAccount = (accounts: StorageAccount) =>
+  ({ type: SET_ACCOUNTS, accounts });
 export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });
 export const setDocument = (documentId: DocumentId, document: Document) =>
