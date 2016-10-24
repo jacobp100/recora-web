@@ -7,6 +7,8 @@ import {
   popoverLeaving, container, arrowTop, content, top as popoverTop,
 } from '../../styles/popover.css';
 
+export type PopoverDescriptor = { type: string, top: number, left: number };
+
 // Can't use CSSTransitionGroup as a container to all popovers
 // Switching from one popover to another hid the second one
 // Even doing each popover in its own CSSTransitionGroup did the same
@@ -21,6 +23,12 @@ export default class Popover extends Component {
 
   static defaultProps = {
     popoverMargin: 12,
+  }
+
+  static getPopover = (type: string, e: Object) => {
+    const { bottom, left, width } = e.currentTarget.getBoundingClientRect();
+    const newPopover = { type, top: bottom, left: left + (width / 2) };
+    return newPopover;
   }
 
   componentWillMount() {

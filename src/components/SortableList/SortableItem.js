@@ -1,12 +1,10 @@
 // @flow
 import React, { Component } from 'react';
 import { findDOMNode } from 'react-dom';
-import { connect } from 'react-redux';
 import classnames from 'classnames';
-import { flow, get, equals, cond } from 'lodash/fp';
+import { flow, equals, cond } from 'lodash/fp';
 import { DragSource, DropTarget } from 'react-dnd';
 import Icon from '../Icon';
-import { setSectionTitle, deleteSection } from '../../redux';
 import { itemEdit, item, target, dragging, deleteIcon } from '../../../styles/sections-popover.css';
 
 
@@ -52,17 +50,19 @@ class SectionsPopoverItem extends Component {
   onKeyDown = ({ keyCode }: Object) => cond([
     // enter
     [equals(13), () => {
-      this.props.setSectionTitle(this.state.title);
+      if (this.props.onChangeTitle) this.props.onChangeTitle(this.props.id, this.state.title);
       this.setState({ isEditing: false });
     }],
     // escape
     [equals(27), () => { this.setState({ isEditing: false }); }],
-  ])(keyCode);
-  toggleEditing = () => { this.setState({ isEditing: !this.state.isEditing }); };
+  ])(keyCode)
+  onDelete = () => { if (this.props.onDelete) this.props.onDelete(this.props.id); }
+  toggleEditing = () => { this.setState({ isEditing: !this.state.isEditing }); }
+
 
   render() {
     const {
-      sectionIndex, onDelete, canDrop, isDragging, connectDragSource, connectDropTarget,
+      canReorder, canDelete, canDrop, isDragging, connectDragSource, connectDropTarget,
     } = this.props;
     const { title, isEditing } = this.state;
 
@@ -79,17 +79,21 @@ class SectionsPopoverItem extends Component {
       );
     }
 
-    return connectDragSource(connectDropTarget(
+    const element = (
       <div
         className={classnames(item, canDrop && target, isDragging && dragging)}
         onDoubleClick={this.toggleEditing}
       >
-        {title || `Section ${sectionIndex + 1}`}
-        <button className={deleteIcon} onClick={onDelete}>
+        {title}
+        {canDelete && <button className={deleteIcon} onClick={this.onDelete}>
           <Icon iconName="trash" />
-        </button>
+        </button>}
       </div>
-    ));
+    );
+
+    return canReorder
+      ? connectDragSource(connectDropTarget(element))
+      : element;
   }
 }
 
@@ -104,13 +108,4 @@ export default flow(
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
   })),
-  connect(
-    ({ sectionTitles }, { sectionId }) => ({
-      sectionTitle: get(sectionId, sectionTitles),
-    }),
-    (dispatch, { sectionId }) => ({
-      setSectionTitle: title => dispatch(setSectionTitle(sectionId, title)),
-      deleteSection: () => dispatch(deleteSection(sectionId)),
-    })
-  )
 )(SectionsPopoverItem);

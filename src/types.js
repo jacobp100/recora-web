@@ -26,6 +26,7 @@ export type StorageAccount = {
 }
 
 export type StorageLocation = {
+  id: string,
   accountId: StorageAccountId,
   title: string,
   lastModified: number,

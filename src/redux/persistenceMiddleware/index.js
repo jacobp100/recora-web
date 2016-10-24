@@ -43,11 +43,11 @@ const LOAD_DOCUMENTS = 'persistence-middleware:LOAD_DOCUMENTS';
 const LOAD_DOCUMENT = 'persistence-middleware:LOAD_DOCUMENT';
 
 const accountsStorageKey = 'accounts';
-const keysToCheckForSave =
-  ['accounts', 'accountTypes', 'accountIdentifiers', 'accountTokens', 'accountNames'];
+const accountKeysToCheckForSave =
+  ['accounts', 'accountTypes', 'accountTokens', 'accountNames'];
 
 const accountsNeedsUpdating = (nextState, previousState) => (
-  some(key => !isEqual(nextState[key], previousState[key]), keysToCheckForSave)
+  some(key => !isEqual(nextState[key], previousState[key]), accountKeysToCheckForSave)
 );
 
 // TODO: if a storage location changes by type, persist; change in any other way, ignore
@@ -301,7 +301,7 @@ export default (storage = getPromiseStorage(), storageImplementations = [
 
     const nextState: State = getState();
 
-    if (accountsNeedsUpdating(getState(), nextState)) doSaveAccounts();
+    if (accountsNeedsUpdating(nextState, previousState)) doSaveAccounts();
 
     const storageTypesWithChanges = filter(
       hasDocumentChangesForStorageType(nextState, previousState),

@@ -1,9 +1,5 @@
 // @flow
-import { curry, concat, get, has } from 'lodash/fp';
-
-export const append = curry((value, array) => (
-  array ? concat(array, value) : [value]
-));
+import { curry, concat, get, has, map, propertyOf, intersection } from 'lodash/fp';
 
 export const getOrThrow = (path, source) => {
   if (!has(path, source)) {
@@ -13,3 +9,16 @@ export const getOrThrow = (path, source) => {
   }
   return get(path, source);
 };
+
+export const append = curry((value, array) => (
+  array ? concat(array, value) : [value]
+));
+
+export const reorder = curry((order, elements) => {
+  const orderedElements = map(propertyOf(elements), order);
+
+  const noElementsAddedRemoved =
+    intersection(orderedElements, elements).length === elements.length;
+
+  return noElementsAddedRemoved ? orderedElements : elements;
+});

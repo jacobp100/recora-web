@@ -40,12 +40,18 @@ export default (storage: PromiseStorage): StorageInterface => {
     const documentsToRemove = filter({ type: STORAGE_ACTION_REMOVE }, storageOperations);
 
     const now = Date.now();
-    const storageLocations = map(storageOperation => ({
-      accountId: storageOperation.account.id,
-      storageKey: get(['storageLocation', 'storageKey'], storageOperation) || generateStorageKey(),
-      title: storageOperation.document.title,
-      lastModified: now,
-    }), documentsToSave);
+    const storageLocations = map(storageOperation => {
+      const storageKey =
+        get(['storageLocation', 'storageKey'], storageOperation) || generateStorageKey();
+
+      return {
+        id: storageKey,
+        accountId: storageOperation.account.id,
+        storageKey,
+        title: storageOperation.document.title,
+        lastModified: now,
+      };
+    }, documentsToSave);
 
     const saveOperations = flow(
       zip(storageLocations),

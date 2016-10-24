@@ -6,6 +6,7 @@
 }
 
 .button {
+  display: inline-block;
   padding: 0.667em 1.5em;
   border: 1px solid currentColor;
   margin: 0;
@@ -16,6 +17,7 @@
   font-weight: 900;
   font-size: 0.667em;
   text-transform: uppercase;
+  text-decoration: none;
   letter-spacing: 0.06em;
   transition: all 0.08s ease-out;
 }

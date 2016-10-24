@@ -1,10 +1,10 @@
 // @flow
 import {
   __, get, set, unset, concat, update, mapValues, without, reduce, assign, flow, includes, flatMap,
-  propertyOf, map, intersection, sample, omit, omitBy, zip, curry, fromPairs, getOr, isNull, union,
+  map, sample, omit, omitBy, zip, curry, fromPairs, getOr, isNull, union, invert,
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
-import { append, getOrThrow } from '../util';
+import { append, reorder, getOrThrow } from '../util';
 import { STORAGE_LOCAL, STORAGE_DROPBOX } from '../types';
 import type { // eslint-disable-line
   StorageLocation, Document, State, SectionId, DocumentId, RecoraResult, StorageAccount,
@@ -27,22 +27,15 @@ const defaultState: State = {
   quickCalculationInput: '',
   quickCalculationResult: { text: '' },
 
-  // Accounts should be uuids or something
-  accounts: [
-    'localStorage',
-    'dr1',
-  ],
+  accounts: ['localStorage1'],
+  accountNames: {
+    localStorage1: 'Local',
+  },
   accountTypes: {
-    localStorage: STORAGE_LOCAL,
-    dr1: STORAGE_DROPBOX,
+    localStorage1: STORAGE_LOCAL,
   },
   accountTokens: {
-    localStorage: '',
-    dr1: '',
-  },
-  accountNames: {
-    localStorage: 'Local',
-    dr1: 'DropBox',
+    localStorage1: '',
   },
 };
 
@@ -67,6 +60,7 @@ export const getDocument = curry((state: State, documentId: DocumentId): Documen
 }));
 
 
+const ADD_ACCOUNT = 'recora:ADD_ACCOUNT';
 const SET_ACCOUNTS = 'recora:SET_ACCOUNTS';
 const SET_DOCUMENTS = 'recora:SET_DOCUMENTS';
 const SET_DOCUMENT = 'recora:SET_DOCUMENT';
@@ -93,9 +87,9 @@ const UNLOAD_DOCUMENTS = 'recora:UNLOAD_DOCUMENTS';
 const idCreator = () => {
   let i = 0;
   return () => {
-    const out = i;
+    const out = String(i);
     i += 1;
-    return String(out);
+    return out;
   };
 };
 const createDocumentId = idCreator();
@@ -151,18 +145,33 @@ const doAddSection = curry((documentId, state) => {
 
 export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
+    case ADD_ACCOUNT: {
+      const { accountId } = action;
+      return flow(
+        update('accounts', append(accountId)),
+        set(['accountTypes', accountId], action.accountType),
+        set(['accountNames', accountId], action.accountName),
+        set(['accountTokens', accountId], action.accountToken)
+      )(state);
+    }
     case SET_ACCOUNTS: {
       const accountIds = map('id', action.accounts);
       const accounts = fromPairs(zip(accountIds, action.accounts));
       return flow(
-        set('accounts'),
+        update('accounts', union(accountIds)),
         update('accountTypes', assign(__, mapValues('type', accounts))),
         update('accountTokens', assign(__, mapValues('token', accounts))),
         update('accountNames', assign(__, mapValues('name', accounts)))
       )(state);
     }
     case SET_DOCUMENTS: {
-      const documentIds = map(createDocumentId, action.documents);
+      const storageLocationIdToDocumentId = flow(
+        mapValues('id'),
+        invert
+      )(state.documentStorageLocations);
+      const documentIds = map(storageLocation => (
+        storageLocationIdToDocumentId[storageLocation.id] || createDocumentId()
+      ), action.documents);
       const documentStorageLocations = fromPairs(zip(documentIds, action.documents));
       const documentTitles = mapValues('title', documentStorageLocations);
       return flow(
@@ -226,18 +235,8 @@ export default (state: State = defaultState, action: Object): State => {
     }
     case SET_DOCUMENT_TITLE:
       return set(['documentTitles', action.documentId], action.title, state);
-    case REORDER_DOCUMENTS: {
-      const { order } = action;
-      const documentIds = get('documents', state);
-      const orderedDocumentIds = map(propertyOf(documentIds), order);
-
-      const noDocumentsAddedRemoved =
-        intersection(orderedDocumentIds, documentIds).length === documentIds.length;
-
-      return noDocumentsAddedRemoved
-        ? set('documents', orderedDocumentIds, state)
-        : state;
-    }
+    case REORDER_DOCUMENTS:
+      return update('documents', reorder(action.order), state);
     case ADD_SECTION:
       return doAddSection(action.documentId, state);
     case SET_SECTION_TITLE:
@@ -251,31 +250,24 @@ export default (state: State = defaultState, action: Object): State => {
         set(['sectionResults', action.sectionId], action.entries),
         set(['sectionTotals', action.sectionId], action.total)
       )(state);
-    case REORDER_SECTIONS: {
-      const { documentId, order } = action;
-      const sectionIds = get(['documentSections', documentId], state);
-      const orderedSectionIds = map(propertyOf(sectionIds), order);
-
-      const noSectionsAddedRemoved =
-        intersection(orderedSectionIds, sectionIds).length === sectionIds.length;
-
-      return noSectionsAddedRemoved
-        ? set(['documentSections', documentId], orderedSectionIds, state)
-        : state;
-    }
+    case REORDER_SECTIONS:
+      return update(
+        ['documentSections', action.documentId],
+        reorder(action.order),
+        state
+      );
     case DELETE_DOCUMENT:
       return doDeleteDocument(action.documentId, state);
     case DELETE_SECTION:
       return doDeleteSection(action.sectionId, state);
     case SET_QUICK_CALCULATION_INPUT:
       return set('quickCalculationInput', action.quickCalculationInput, state);
-    case GET_QUICK_CALCULATION_EXAMPLE: {
-      let example;
-      do {
-        example = sample(quickCalculationExamples);
-      } while (state.quickCalculationInput === example);
-      return set('quickCalculationInput', example, state);
-    }
+    case GET_QUICK_CALCULATION_EXAMPLE:
+      return update(
+        'quickCalculationInput',
+        currentValue => sample(without([currentValue], quickCalculationExamples)),
+        state
+      );
     case SET_QUICK_CALCULATION_RESULT:
       return set('quickCalculationResult', action.quickCalculationResult, state);
     case SET_CUSTOM_UNITS:
@@ -286,7 +278,9 @@ export default (state: State = defaultState, action: Object): State => {
 };
 
 /* eslint-disable max-len */
-export const setAccount = (accounts: StorageAccount) =>
+export const addAccount = (accountType, accountId, accountToken, accountName) =>
+  ({ type: ADD_ACCOUNT, accountType, accountId, accountToken, accountName });
+export const setAccounts = (accounts: StorageAccount) =>
   ({ type: SET_ACCOUNTS, accounts });
 export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });

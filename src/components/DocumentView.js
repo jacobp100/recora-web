@@ -1,14 +1,14 @@
 // @flow
 import React, { Component, PropTypes } from 'react';
-import { equals, always, cond, matchesProperty } from 'lodash/fp';
+import { equals, always, cond, matchesProperty, stubTrue, get } from 'lodash/fp';
 import { TweenState } from 'state-transitions';
 import Page from './Page';
 import { Header, HeaderSection } from './Header';
 import { StackButton, HorizontalLink } from './HeaderButton';
+import Popover from './Popover';
 import SettingsPopup from './SettingsPopup';
 import SectionsPopover from './SectionsPopover';
 
-type Popover = { type: string, top: number, left: number };
 
 const SETTINGS = 'settings';
 const SECTIONS = 'sections';
@@ -20,23 +20,16 @@ export default class DocumentView extends Component {
     }).isRequired,
   }
 
-  state: {
-    popup: ?string,
-    popover: ?Popover,
-  } = {
+  state = {
     popup: null,
     popover: null,
   }
 
   setPopover = (type: string, e: Object) => {
-    const { popover } = this.state;
-    if (popover && popover.type === type) {
-      this.setState({ popover: null });
-    } else {
-      const { bottom, left, width } = e.currentTarget.getBoundingClientRect();
-      const newPopover = { type, top: bottom, left: left + (width / 2) };
-      this.setState({ popover: newPopover });
-    }
+    const popover = get(['popover', 'type'], this.state) !== type
+      ? Popover.getPopover(type, e)
+      : null;
+    this.setState({ popover });
   }
 
   toggleSettingsPopup = () => this.setState({ popup: SETTINGS })
@@ -49,19 +42,18 @@ export default class DocumentView extends Component {
     [equals(SETTINGS), () => (
       <SettingsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
     )],
-    [always(true), always(null)],
+    [stubTrue, always(null)],
   ]);
 
   renderPopover = cond([
     [matchesProperty('type', SECTIONS), popover => (
       <SectionsPopover
+        {...popover}
         documentId={this.props.params.documentId}
-        top={popover.top}
-        left={popover.left}
         onClose={this.closePopover}
       />
     )],
-    [always(true), always(null)],
+    [stubTrue, always(null)],
   ]);
 
   render() {
