@@ -50,7 +50,7 @@ export default () => remoteStorageImplementation(STORAGE_DROPBOX, {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/octet-stream',
       'Dropbox-API-Arg': JSON.stringify({
-        path: path || `/${doc.title}.txt`,
+        path: path || `/${doc.title}.recora`,
         mode: rev ? {
           '.tag': 'update',
           update: rev,

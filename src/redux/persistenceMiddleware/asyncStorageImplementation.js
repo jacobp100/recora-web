@@ -1,6 +1,6 @@
 // @flow
 import {
-  map, isEmpty, compact, zip, flow, filter, get, concat, set, groupBy, values, omit,
+  map, isEmpty, compact, zip, flow, filter, get, concat, set, groupBy, omit, fromPairs, uniq, propertyOf,
 } from 'lodash/fp';
 import uuid from 'uuid';
 import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE, STORAGE_LOCAL } from '../../types';
@@ -35,7 +35,7 @@ export default (storage: PromiseStorage): StorageInterface => {
     return document;
   };
 
-  const updateStore = async (storageOperations: StorageOperation[]) => {
+  const updateStore = async (storageOperations: StorageOperation[], state) => {
     const documentsToSave = filter({ action: STORAGE_ACTION_SAVE }, storageOperations);
     const documentsToRemove = filter({ action: STORAGE_ACTION_REMOVE }, storageOperations);
 
@@ -66,16 +66,41 @@ export default (storage: PromiseStorage): StorageInterface => {
       map('storageKey')
     )(documentsToRemove);
 
-    const storageLocationsByAccount = values(groupBy('accountId', storageLocations));
-    const storageLocationOperations = map(storageLocations => [
-      storageLocations[0].accountId,
-      JSON.stringify(map(omit(['accountId']), storageLocations)),
-    ], storageLocationsByAccount);
+    // Update saved list of documents
+    const newStorageLocationsByDocumentId =
+      fromPairs(zip(map('document.id', documentsToSave), storageLocations));
+
+    const previousStorageLocation = documentId =>
+      get(['documentStorageLocations', documentId], state);
+
+    const documentsByAccountId = groupBy(flow(
+      previousStorageLocation,
+      get('accountId')
+    ), state.documents);
+
+    const accountsToUpdate = flow(
+      map('accountId'),
+      uniq
+    )(storageLocations);
+
+    const newStorageLocationsForAccountsToUpdate = map(flow(
+      propertyOf(documentsByAccountId),
+      map(documentId => (
+        newStorageLocationsByDocumentId[documentId] || previousStorageLocation(documentId)
+      ))
+    ), accountsToUpdate);
+
+    const storageLocationOperations = flow(
+      map(value => JSON.stringify(map(omit(['accountId']), value))),
+      zip(accountsToUpdate)
+    )(newStorageLocationsForAccountsToUpdate);
 
     await Promise.all(compact([
       !isEmpty(removeOperations) ? storage.multiRemove(removeOperations) : null,
       storage.multiSet(concat(saveOperations, storageLocationOperations)),
     ]));
+
+    return storageLocations;
   };
 
   return {

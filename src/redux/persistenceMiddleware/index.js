@@ -264,7 +264,7 @@ export default (storage = getPromiseStorage(), storageImplementations = [
     if (isEmpty(storageOperations)) return;
 
     try {
-      const storageLocations = await storage.updateStore(storageOperations);
+      const storageLocations = await storage.updateStore(storageOperations, currentState);
 
       lastDocumentById = flow(
         omit(removed),

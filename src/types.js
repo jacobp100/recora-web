@@ -63,7 +63,7 @@ export type StorageInterface = {
   type: StorageType,
   delay: Number,
   maxWait: Number,
-  loadDocuments: (state: State) => Promise<StorageLocation[]>,
-  loadDocument: (location: StorageLocation, state: State) => Promise<Document>,
-  updateStore: (operations: StorageOperotaion[]) => Promise<(?StorageLocation)[]>,
+  loadDocuments: (account: StorageAccount) => Promise<StorageLocation[]>,
+  loadDocument: (account: StorageAccount, location: StorageLocation) => Promise<Document>,
+  updateStore: (operations: StorageOperotaion[], state: State) => Promise<(?StorageLocation)[]>,
 };
