@@ -67,11 +67,11 @@ export default (storage: PromiseStorage): StorageInterface => {
     )(documentsToRemove);
 
     // Update saved list of documents
-    const newStorageLocationsByDocumentId =
-      fromPairs(zip(map('document.id', documentsToSave), storageLocations));
-
     const previousStorageLocation = documentId =>
       get(['documentStorageLocations', documentId], state);
+
+    const newStorageLocationsByDocumentId =
+      fromPairs(zip(map('document.id', documentsToSave), storageLocations));
 
     const documentsByAccountId = groupBy(flow(
       previousStorageLocation,
@@ -85,9 +85,7 @@ export default (storage: PromiseStorage): StorageInterface => {
 
     const newStorageLocationsForAccountsToUpdate = map(flow(
       propertyOf(documentsByAccountId),
-      map(documentId => (
-        newStorageLocationsByDocumentId[documentId] || previousStorageLocation(documentId)
-      ))
+      map(docId => newStorageLocationsByDocumentId[docId] || previousStorageLocation(docId))
     ), accountsToUpdate);
 
     const storageLocationOperations = flow(
