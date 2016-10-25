@@ -1,7 +1,7 @@
 // @flow
 import {
   __, get, set, unset, concat, update, mapValues, without, reduce, assign, flow, includes, flatMap,
-  map, sample, omit, omitBy, zip, curry, fromPairs, getOr, isNull, union, invert,
+  map, sample, omit, omitBy, zip, curry, fromPairs, getOr, isNull, union, invert, sortBy,
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
 import { append, reorder, getOrThrow } from '../util';
@@ -192,7 +192,12 @@ export default (state: State = defaultState, action: Object): State => {
       return flow(
         update('documents', union(documentIds)),
         update('documentStorageLocations', assign(__, documentStorageLocations)),
-        update('documentTitles', assign(__, documentTitles))
+        update('documentTitles', assign(__, documentTitles)),
+        state => update(
+          'documents',
+          sortBy(docId => -get(['documentStorageLocations', docId, 'lastModified'], state)),
+          state,
+        ),
       )(state);
     }
     case SET_DOCUMENT: {

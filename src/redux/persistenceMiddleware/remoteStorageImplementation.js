@@ -57,7 +57,7 @@ export default (type, remote): StorageInterface => {
 
   const storageModes = {
     [STORAGE_ACTION_SAVE]: (account, storageLocation, document) =>
-      remote.post(account.token, storageLocation, documentToString(document))
+      remote.post(account.token, storageLocation, documentToString(document), document)
         .then(setAccountProperties(account)),
     [STORAGE_ACTION_REMOVE]: (account, storageLocation) =>
       remote.delete(account.token, storageLocation)

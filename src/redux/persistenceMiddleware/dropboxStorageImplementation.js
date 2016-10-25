@@ -44,13 +44,13 @@ export default () => remoteStorageImplementation(STORAGE_DROPBOX, {
     response.text()
   )),
 
-  post: (token, { path, rev }: DropBoxStorageBase, body) => fetch(`${contentUri}/upload`, {
+  post: (token, { path, rev }: DropBoxStorageBase, body, doc) => fetch(`${contentUri}/upload`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/octet-stream',
       'Dropbox-API-Arg': JSON.stringify({
-        path,
+        path: path || `/${doc.title}.txt`,
         mode: rev ? {
           '.tag': 'update',
           update: rev,
