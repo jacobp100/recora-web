@@ -33,6 +33,7 @@ gulp.task('icons', () => {
       'pe-7s-help1',
       'pe-7s-notebook',
       'pe-7s-print',
+      'pe-7s-refresh-2',
       'pe-7s-share',
       'pe-7s-trash',
       'pe-7s-users',

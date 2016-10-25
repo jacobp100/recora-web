@@ -1,7 +1,7 @@
 // @flow
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { map, cond, matchesProperty, stubTrue, constant, get, equals } from 'lodash/fp';
+import { map, cond, matchesProperty, stubTrue, constant, get, equals, isEmpty } from 'lodash/fp';
 import { AnimateInOut } from 'state-transitions';
 import { Header, HeaderSection } from './Header';
 import { StackLink, StackButton, HorizontalButton } from './HeaderButton';
@@ -16,21 +16,30 @@ import { addDocument, loadDocuments } from '../redux';
 import { container, containerLeaving } from '../../styles/document-list.css';
 
 
+const LOADING_DOCUMENT_LIST_IN_FOREGROUND = 0;
+const UPDATING_DOCUMENT_LIST_IN_BACKGROUND = 1;
+const LOADED_DOCUMENT_LIST = 2;
+
+
 const ACCOUNTS_POPOVER = 'accounts';
 const CREATE_DOCUMENT_POPOVER = 'create-document';
 const ADD_ACCOUNT_POPUP = 'add-account';
 
 class DocumentList extends Component {
-  state = {
-    didLoadDocuments: false,
-    popup: null,
-    popover: null,
+  constructor() {
+    super();
+    this.state = {
+      documentLoadingState: LOADED_DOCUMENT_LIST,
+      popup: null,
+      popover: null,
+    };
   }
 
   componentWillMount() {
-    this.props.loadDocuments().then(() => {
-      this.setState({ didLoadDocuments: true });
-    });
+    if (isEmpty(this.props.documents)) {
+      this.setState({ documentLoadingState: LOADING_DOCUMENT_LIST_IN_FOREGROUND });
+      this.doRefreshDocuments();
+    }
   }
 
   setPopover = (type: string, e: Object) => {
@@ -46,6 +55,17 @@ class DocumentList extends Component {
   toggleAccountsPopover = (e: Object) => this.setPopover(ACCOUNTS_POPOVER, e)
   toggleCreateDocumentPopover = (e: Object) => this.setPopover(CREATE_DOCUMENT_POPOVER, e)
   closePopover = () => this.setState({ popover: null })
+
+  refreshDocuments = () => {
+    this.setState({ documentLoadingState: UPDATING_DOCUMENT_LIST_IN_BACKGROUND });
+    this.doRefreshDocuments();
+  }
+
+  doRefreshDocuments = () => {
+    this.props.loadDocuments().then(() => {
+      this.setState({ documentLoadingState: LOADED_DOCUMENT_LIST });
+    });
+  }
 
   renderPopup = cond([
     [equals(ADD_ACCOUNT_POPUP), () => (
@@ -73,10 +93,10 @@ class DocumentList extends Component {
 
   render() {
     const { documents, addDocument } = this.props;
-    const { didLoadDocuments, popup, popover } = this.state;
+    const { documentLoadingState, popup, popover } = this.state;
 
     let pagePreviews;
-    if (!didLoadDocuments) {
+    if (documentLoadingState === LOADING_DOCUMENT_LIST_IN_FOREGROUND) {
       // Uses style from loading screen
       pagePreviews = <h1 className="loading">Loading Documents&hellip;</h1>;
     } else if (documents.length === 0) {
@@ -90,6 +110,8 @@ class DocumentList extends Component {
       ), documents);
     }
 
+    const updatingInBackground = documentLoadingState === UPDATING_DOCUMENT_LIST_IN_BACKGROUND;
+
     return (
       <div>
         <Header>
@@ -98,11 +120,12 @@ class DocumentList extends Component {
             <HorizontalButton iconName="angle-down" onClick={this.toggleCreateDocumentPopover} />
           </HeaderSection>
           <HeaderSection place="center">
-            <HeaderTitle>Recora</HeaderTitle>
+            <HeaderTitle>{updatingInBackground ? 'Updating Documents…' : 'Recora'}</HeaderTitle>
           </HeaderSection>
           <HeaderSection place="right">
             <StackButton iconName="folder" text="Folders" onClick={this.toggleAccountsPopover} />
             <StackButton iconName="users" text="Accounts" onClick={this.toggleAccountsPopover} />
+            <StackButton iconName="refresh-2" text="Refresh" onClick={this.refreshDocuments} />
             <StackLink iconName="help1" text="About" to="/" />
           </HeaderSection>
         </Header>
