@@ -5,7 +5,7 @@ import {
 } from 'lodash/fp';
 import quickCalculationExamples from './quickCalculationExamples.json';
 import { append, reorder, getOrThrow } from '../util';
-import { STORAGE_LOCAL, STORAGE_DROPBOX } from '../types';
+import { STORAGE_LOCAL } from '../types';
 import type { // eslint-disable-line
   StorageLocation, Document, State, SectionId, DocumentId, RecoraResult, StorageAccount,
   StorageAccountId,
@@ -142,6 +142,21 @@ const doAddSection = curry((documentId, state) => {
   )(state);
 });
 
+const doAddDocument = curry((title, accountId, state) => {
+  const id = createDocumentId();
+  return flow(
+    update('loadedDocuments', append(id)),
+    update('documents', concat(id)),
+    set(['documentTitles', id], title),
+    set(['documentStorageLocations', id], {
+      accountId,
+      title,
+      lastModified: Date.now(),
+    }),
+    doAddSection(id)
+  )(state);
+});
+
 
 export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
@@ -214,25 +229,8 @@ export default (state: State = defaultState, action: Object): State => {
         assign(__, action.documentStorageLocations),
         omitBy(isNull)
       ), state);
-    case ADD_DOCUMENT: {
-      const id = createDocumentId();
-      const title = 'New Document';
-      return flow(
-        update('loadedDocuments', append(id)),
-        update('documents', concat(id)),
-        set(['documentTitles', id], title),
-        set(['documentStorageLocations', id], {
-          title,
-          // type: STORAGE_LOCAL,
-          // sectionStorageKeys: [],
-          account: 'dr1',
-          type: STORAGE_DROPBOX,
-          path: '/test.recora.md',
-          rev: '',
-        }),
-        doAddSection(id)
-      )(state);
-    }
+    case ADD_DOCUMENT:
+      return doAddDocument(action.filename, action.accountId, state);
     case SET_DOCUMENT_TITLE:
       return set(['documentTitles', action.documentId], action.title, state);
     case REORDER_DOCUMENTS:
@@ -291,7 +289,9 @@ export const unloadDocuments = (documentIds: DocumentId) =>
 export const updateDocumentStorageLocations = (documentStorageLocations: Object) =>
   ({ type: UPDATE_DOCUMENT_STORAGE_LOCATIONS, documentStorageLocations });
 export const addDocument = () =>
-  ({ type: ADD_DOCUMENT });
+  ({ type: ADD_DOCUMENT, filename: 'New Document', accountId: 'localStorage1' });
+export const addDocumentForAccount = (filename: string, accountId: StorageAccountId) =>
+  ({ type: ADD_DOCUMENT, filename, accountId });
 export const setDocumentTitle = (documentId: DocumentId, title: string) =>
   ({ type: SET_DOCUMENT_TITLE, documentId, title });
 export const reorderDocuments = (order: number[]) =>

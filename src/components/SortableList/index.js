@@ -47,7 +47,7 @@ class PopoverContainer extends Component {
   }
 
   render() {
-    const { rows, rowTitles, onReorder, onDelete, onChangeTitle } = this.props;
+    const { rows, rowTitles, onReorder, onClick, onDelete, onChangeTitle } = this.props;
     const { order } = this.state;
 
     const canDelete = Boolean(onDelete);
@@ -69,6 +69,7 @@ class PopoverContainer extends Component {
           title={title}
           onReorder={this.reorder}
           onDragEnd={this.dragEnd}
+          onClick={onClick}
           onDelete={onDelete}
           onChangeTitle={onChangeTitle}
         />

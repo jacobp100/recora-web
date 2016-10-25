@@ -11,11 +11,13 @@ import DocumentPreview from './DocumentPreview';
 import Popover from './Popover';
 import AddAccountPopup from './AddAccountPopup';
 import AccountsPopover from './AccountsPopover';
+import CreateDocumentPopover from './CreateDocumentPopover';
 import { addDocument } from '../redux';
 import { container, containerLeaving } from '../../styles/document-list.css';
 
 
 const ACCOUNTS_POPOVER = 'accounts';
+const CREATE_DOCUMENT_POPOVER = 'create-document';
 const ADD_ACCOUNT_POPUP = 'add-account';
 
 class DocumentList extends Component {
@@ -35,6 +37,7 @@ class DocumentList extends Component {
   closePopup = () => this.setState({ popup: null })
 
   toggleAccountsPopover = (e: Object) => this.setPopover(ACCOUNTS_POPOVER, e)
+  toggleCreateDocumentPopover = (e: Object) => this.setPopover(CREATE_DOCUMENT_POPOVER, e)
   closePopover = () => this.setState({ popover: null })
 
   renderPopup = cond([
@@ -49,6 +52,12 @@ class DocumentList extends Component {
       <AccountsPopover
         {...popover}
         onAddAccount={this.toggleAddAccountPopup}
+        onClose={this.closePopover}
+      />
+    )],
+    [matchesProperty('type', CREATE_DOCUMENT_POPOVER), popover => (
+      <CreateDocumentPopover
+        {...popover}
         onClose={this.closePopover}
       />
     )],
@@ -75,12 +84,14 @@ class DocumentList extends Component {
         <Header>
           <HeaderSection place="left">
             <HorizontalButton iconName="file" text="New Document" onClick={addDocument} />
+            <HorizontalButton iconName="angle-down" onClick={this.toggleCreateDocumentPopover} />
           </HeaderSection>
           <HeaderSection place="center">
             <HeaderTitle>Recora</HeaderTitle>
           </HeaderSection>
           <HeaderSection place="right">
-            <StackButton iconName="help1" text="Accounts" onClick={this.toggleAccountsPopover} />
+            <StackButton iconName="folder" text="Folders" onClick={this.toggleAccountsPopover} />
+            <StackButton iconName="users" text="Accounts" onClick={this.toggleAccountsPopover} />
             <StackLink iconName="help1" text="About" to="/" />
           </HeaderSection>
         </Header>

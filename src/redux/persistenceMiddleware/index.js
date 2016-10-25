@@ -55,7 +55,11 @@ const documentKeysToPersist = ['documentTitles', 'documentSections'];
 const sectionKeysToPersist = ['sectionTitles', 'sectionTextInputs'];
 
 const loadedDocumentsForType = (state, storageType) => flow(
-  filter(id => get(['documentStorageLocations', id, 'type'], state) === storageType),
+  filter(id => {
+    const accountId = get(['documentStorageLocations', id, 'accountId'], state);
+    const accountType = get(['accountTypes', accountId], state);
+    return accountType === storageType;
+  }),
   filter(id => includes(id, state.loadedDocuments))
 )(state.documents);
 
@@ -235,15 +239,21 @@ export default (storage = getPromiseStorage(), storageImplementations = [
     const getStorageOperation = curry((
       action: StorageAction,
       documentId: DocumentId
-    ): StorageOperation => ({
-      action,
-      storageLocation: get(['documentStorageLocations', documentId], currentState),
-      document: action !== STORAGE_ACTION_REMOVE
-        ? getOrThrow(documentId, currentDocumentById)
-        : getOrThrow(documentId, lastDocumentById),
-      previousDocument: lastDocumentById[documentId],
-      lastRejection: lastRejectionPerStorageType[storageType],
-    }));
+    ): StorageOperation => {
+      const storageLocation = get(['documentStorageLocations', documentId], currentState);
+      const account = getAccount(currentState, storageLocation.accountId);
+
+      return {
+        action,
+        storageLocation,
+        account,
+        document: action !== STORAGE_ACTION_REMOVE
+          ? getOrThrow(documentId, currentDocumentById)
+          : getOrThrow(documentId, lastDocumentById),
+        previousDocument: lastDocumentById[documentId],
+        lastRejection: lastRejectionPerStorageType[storageType],
+      };
+    });
 
     const storageOperations = concat(
       map(getStorageOperation(STORAGE_ACTION_SAVE), addedChanged),
@@ -254,7 +264,7 @@ export default (storage = getPromiseStorage(), storageImplementations = [
     if (isEmpty(storageOperations)) return;
 
     try {
-      const storageLocations = await storage.updateStore(storageOperations, currentState);
+      const storageLocations = await storage.updateStore(storageOperations);
 
       lastDocumentById = flow(
         omit(removed),

@@ -36,8 +36,8 @@ export default (storage: PromiseStorage): StorageInterface => {
   };
 
   const updateStore = async (storageOperations: StorageOperation[]) => {
-    const documentsToSave = filter({ type: STORAGE_ACTION_SAVE }, storageOperations);
-    const documentsToRemove = filter({ type: STORAGE_ACTION_REMOVE }, storageOperations);
+    const documentsToSave = filter({ action: STORAGE_ACTION_SAVE }, storageOperations);
+    const documentsToRemove = filter({ action: STORAGE_ACTION_REMOVE }, storageOperations);
 
     const now = Date.now();
     const storageLocations = map(storageOperation => {
@@ -74,7 +74,7 @@ export default (storage: PromiseStorage): StorageInterface => {
 
     await Promise.all(compact([
       !isEmpty(removeOperations) ? storage.multiRemove(removeOperations) : null,
-      storage.multiSet(concat(saveOperations, [storageLocationOperations])),
+      storage.multiSet(concat(saveOperations, storageLocationOperations)),
     ]));
   };
 

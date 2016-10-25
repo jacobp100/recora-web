@@ -26,13 +26,16 @@ gulp.task('icons', () => {
     size: 12,
     filterNames: [
       'pe-7s-angle-left',
+      'pe-7s-angle-down',
       'pe-7s-config',
       'pe-7s-file',
+      'pe-7s-folder',
       'pe-7s-help1',
       'pe-7s-notebook',
       'pe-7s-print',
       'pe-7s-share',
       'pe-7s-trash',
+      'pe-7s-users',
     ],
     transformNames: name => name.substr('pe-7s-'.length),
   });

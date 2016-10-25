@@ -54,6 +54,7 @@ export const STORAGE_ACTION_REMOVE: StorageAction = 'STORAGE_ACTION_REMOVE';
 export type StorageOperotaion = {
   action: StorageAction,
   storageLocation: ?StorageLocation,
+  account: StorageAccount,
   document: Document, // If STORAGE_ACTION_REMOVE, document === previousDocument
   previousDocument: ?Document,
   lastRejection: any,
@@ -64,5 +65,5 @@ export type StorageInterface = {
   maxWait: Number,
   loadDocuments: (state: State) => Promise<StorageLocation[]>,
   loadDocument: (location: StorageLocation, state: State) => Promise<Document>,
-  updateStore: (operations: StorageOperotaion[], state: State) => Promise<(?StorageLocation)[]>,
+  updateStore: (operations: StorageOperotaion[]) => Promise<(?StorageLocation)[]>,
 };

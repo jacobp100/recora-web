@@ -46,17 +46,19 @@ class SectionsPopoverItem extends Component {
 
   state: { title: string, isEditing: bool }
 
-  onInput = ({ target }: Object) => this.setState({ title: target.value });
+  onChange = ({ target }: Object) => this.setState({ title: target.value });
   onKeyDown = ({ keyCode }: Object) => cond([
     // enter
     [equals(13), () => {
       if (this.props.onChangeTitle) this.props.onChangeTitle(this.props.id, this.state.title);
-      this.setState({ isEditing: false });
+      this.stopEditing();
     }],
     // escape
-    [equals(27), () => { this.setState({ isEditing: false }); }],
+    [equals(27), () => { this.stopEditing(); }],
   ])(keyCode)
   onDelete = () => { if (this.props.onDelete) this.props.onDelete(this.props.id); }
+  onClick = () => { if (this.props.onClick) this.props.onClick(this.props.id); }
+  stopEditing = () => { this.setState({ isEditing: false }); }
   toggleEditing = () => { this.setState({ isEditing: !this.state.isEditing }); }
 
 
@@ -73,15 +75,19 @@ class SectionsPopoverItem extends Component {
           value={title}
           type="text"
           onKeyDown={this.onKeyDown}
-          onInput={this.onInput}
+          onChange={this.onChange}
+          onBlur={this.stopEditing}
           autoFocus
         />
       );
     }
 
+    /* eslint-disable jsx-a11y/no-static-element-interactions */
     const element = (
       <div
+        role="button"
         className={classnames(item, canDrop && target, isDragging && dragging)}
+        onClick={this.onClick}
         onDoubleClick={this.toggleEditing}
       >
         {title}
@@ -90,6 +96,7 @@ class SectionsPopoverItem extends Component {
         </button>}
       </div>
     );
+    /* eslint-enable */
 
     return canReorder
       ? connectDragSource(connectDropTarget(element))

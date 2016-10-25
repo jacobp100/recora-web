@@ -65,7 +65,7 @@ export default (type, remote): StorageInterface => {
   };
 
   const updateStore = (storageOperations) => {
-    const promises = map(({ account, action, storageLocation, document }) => (
+    const promises = map(({ action, account, storageLocation, document }) => (
       storageModes[action](account, storageLocation, document)
     ), storageOperations);
 
