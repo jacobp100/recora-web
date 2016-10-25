@@ -157,6 +157,19 @@ const doAddDocument = curry((title, accountId, state) => {
   )(state);
 });
 
+const doUpdateDocumentStorageLocations = curry((documentStorageLocations, state) => flow(
+  update('documentStorageLocations', flow(
+    assign(__, documentStorageLocations),
+    omitBy(isNull)
+  )),
+  update('documentTitles', assign(__, mapValues('title', documentStorageLocations))),
+  state => update(
+    'documents',
+    sortBy(docId => -get(['documentStorageLocations', docId, 'lastModified'], state)),
+    state,
+  )
+)(state));
+
 
 export default (state: State = defaultState, action: Object): State => {
   switch (action.type) {
@@ -188,16 +201,9 @@ export default (state: State = defaultState, action: Object): State => {
         storageLocationIdToDocumentId[storageLocation.id] || createDocumentId()
       ), action.documents);
       const documentStorageLocations = fromPairs(zip(documentIds, action.documents));
-      const documentTitles = mapValues('title', documentStorageLocations);
       return flow(
         update('documents', union(documentIds)),
-        update('documentStorageLocations', assign(__, documentStorageLocations)),
-        update('documentTitles', assign(__, documentTitles)),
-        state => update(
-          'documents',
-          sortBy(docId => -get(['documentStorageLocations', docId, 'lastModified'], state)),
-          state,
-        ),
+        doUpdateDocumentStorageLocations(documentStorageLocations)
       )(state);
     }
     case SET_DOCUMENT: {
@@ -230,10 +236,7 @@ export default (state: State = defaultState, action: Object): State => {
       )(state);
     }
     case UPDATE_DOCUMENT_STORAGE_LOCATIONS:
-      return update('documentStorageLocations', flow(
-        assign(__, action.documentStorageLocations),
-        omitBy(isNull)
-      ), state);
+      return doUpdateDocumentStorageLocations(action.documentStorageLocations, state);
     case ADD_DOCUMENT:
       return doAddDocument(action.filename, action.accountId, state);
     case SET_DOCUMENT_TITLE:

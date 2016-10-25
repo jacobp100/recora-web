@@ -1,7 +1,7 @@
 // @flow
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { map, cond, matchesProperty, stubTrue, always, get, equals } from 'lodash/fp';
+import { map, cond, matchesProperty, stubTrue, constant, get, equals } from 'lodash/fp';
 import { AnimateInOut } from 'state-transitions';
 import { Header, HeaderSection } from './Header';
 import { StackLink, StackButton, HorizontalButton } from './HeaderButton';
@@ -12,7 +12,7 @@ import Popover from './Popover';
 import AddAccountPopup from './AddAccountPopup';
 import AccountsPopover from './AccountsPopover';
 import CreateDocumentPopover from './CreateDocumentPopover';
-import { addDocument } from '../redux';
+import { addDocument, loadDocuments } from '../redux';
 import { container, containerLeaving } from '../../styles/document-list.css';
 
 
@@ -22,8 +22,15 @@ const ADD_ACCOUNT_POPUP = 'add-account';
 
 class DocumentList extends Component {
   state = {
+    didLoadDocuments: false,
     popup: null,
     popover: null,
+  }
+
+  componentWillMount() {
+    this.props.loadDocuments().then(() => {
+      this.setState({ didLoadDocuments: true });
+    });
   }
 
   setPopover = (type: string, e: Object) => {
@@ -44,7 +51,7 @@ class DocumentList extends Component {
     [equals(ADD_ACCOUNT_POPUP), () => (
       <AddAccountPopup onClose={this.closePopup} />
     )],
-    [stubTrue, always(null)],
+    [stubTrue, constant(null)],
   ]);
 
   renderPopover = cond([
@@ -61,22 +68,26 @@ class DocumentList extends Component {
         onClose={this.closePopover}
       />
     )],
-    [stubTrue, always(null)],
+    [stubTrue, constant(null)],
   ]);
 
   render() {
     const { documents, addDocument } = this.props;
-    const { popup, popover } = this.state;
+    const { didLoadDocuments, popup, popover } = this.state;
 
-    let pagePreviews = map(documentId => (
-      <DocumentPreview
-        key={documentId}
-        documentId={documentId}
-      />
-    ), documents);
-
-    if (pagePreviews.length === 0) {
+    let pagePreviews;
+    if (!didLoadDocuments) {
+      // Uses style from loading screen
+      pagePreviews = <h1 className="loading">Loading Documents&hellip;</h1>;
+    } else if (documents.length === 0) {
       pagePreviews = <NoDocuments onAddDocument={addDocument} />;
+    } else {
+      pagePreviews = map(documentId => (
+        <DocumentPreview
+          key={documentId}
+          documentId={documentId}
+        />
+      ), documents);
     }
 
     return (
@@ -111,5 +122,5 @@ export default connect(
   ({ documents }) => ({
     documents,
   }),
-  { addDocument }
+  { loadDocuments, addDocument }
 )(DocumentList);

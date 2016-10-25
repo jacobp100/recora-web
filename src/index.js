@@ -7,7 +7,7 @@ import { Router, Route, IndexRoute, hashHistory } from 'react-router';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { includes, flow, split, map, fromPairs, some, isNil } from 'lodash/fp';
-import reducer, { loadDocuments, loadDocument, addAccount } from './redux';
+import reducer, { loadDocument, addAccount } from './redux';
 import cacheInvalidationMiddleware from './redux/cacheInvalidationMiddleware';
 import currencyUpdaterMiddleware from './redux/currencyUpdaterMiddleware';
 import persistenceMiddleware from './redux/persistenceMiddleware';
@@ -67,8 +67,6 @@ if (accountParams.account in getAccountParams) {
   const params = getAccountParams[accountParams.account](authenticationParams);
   if (!some(isNil, params)) store.dispatch(addAccount(accountParams.account, ...params));
 }
-
-store.dispatch(loadDocuments());
 
 store.subscribe(() => {
   if (documentId) return;

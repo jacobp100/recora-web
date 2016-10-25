@@ -13,7 +13,7 @@ const entryToStorageLocation = entry => ({
   title: entry.name.match(/^[^.]*/)[0],
   lastModified: Date.parse(entry.client_modified),
   path: entry.path_display,
-  rev: entry.rev.rev,
+  rev: entry.rev,
 });
 
 export default () => remoteStorageImplementation(STORAGE_DROPBOX, {
@@ -51,12 +51,7 @@ export default () => remoteStorageImplementation(STORAGE_DROPBOX, {
       'Content-Type': 'application/octet-stream',
       'Dropbox-API-Arg': JSON.stringify({
         path: path || `/${doc.title}.recora`,
-        mode: rev ? {
-          '.tag': 'update',
-          update: rev,
-        } : {
-          '.tag': 'add',
-        },
+        mode: rev ? { '.tag': 'update', update: rev } : 'add',
         autorename: true,
       }),
     },

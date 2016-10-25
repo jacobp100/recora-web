@@ -1,6 +1,6 @@
 // @flow
 import React, { Component, PropTypes } from 'react';
-import { equals, always, cond, matchesProperty, stubTrue, get } from 'lodash/fp';
+import { equals, constant, cond, matchesProperty, stubTrue, get } from 'lodash/fp';
 import { TweenState } from 'state-transitions';
 import Page from './Page';
 import { Header, HeaderSection } from './Header';
@@ -42,7 +42,7 @@ export default class DocumentView extends Component {
     [equals(SETTINGS), () => (
       <SettingsPopup documentId={this.props.params.documentId} onClose={this.closePopup} />
     )],
-    [stubTrue, always(null)],
+    [stubTrue, constant(null)],
   ]);
 
   renderPopover = cond([
@@ -53,7 +53,7 @@ export default class DocumentView extends Component {
         onClose={this.closePopover}
       />
     )],
-    [stubTrue, always(null)],
+    [stubTrue, constant(null)],
   ]);
 
   render() {

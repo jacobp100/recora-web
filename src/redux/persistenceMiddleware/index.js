@@ -1,8 +1,8 @@
 // @flow
 import {
   __, isEqual, some, get, isEmpty, filter, difference, intersection, every, overSome, forEach, map,
-  mapValues, curry, keys, keyBy, concat, fromPairs, zip, flow, assign, pick, omit, overEvery,
-  includes,
+  mapValues, curry, keys, keyBy, concat, fromPairs, zip, flow, assign, pick, omit, includes,
+  groupBy, values, flatten,
 } from 'lodash/fp';
 import { debounce } from 'lodash';
 import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE } from '../../types';
@@ -51,6 +51,10 @@ const accountsNeedsUpdating = (nextState, previousState) => (
 );
 
 // TODO: if a storage location changes by type, persist; change in any other way, ignore
+const UPDATE_PRIORITY_NO_CHANGES = 0;
+const UPDATE_PRIORITY_LAZY = 1;
+const UPDATE_PRIORITY_IMMEDIATE = 2;
+
 const documentKeysToPersist = ['documentTitles', 'documentSections'];
 const sectionKeysToPersist = ['sectionTitles', 'sectionTextInputs'];
 
@@ -107,12 +111,6 @@ const changedDocuments = (
   return changed;
 };
 
-const noChangeInDocuments = overEvery([
-  flow(addedDocuments, isEmpty),
-  flow(removedDocuments, isEmpty),
-  flow(changedDocuments, isEmpty),
-]);
-
 const addedRemovedChangedArgsForType = (nextState, previousState, storageType) => {
   const previousDocumentsForStorageType =
     loadedDocumentsForType(previousState, storageType);
@@ -129,13 +127,16 @@ const addedRemovedChangedArgsForType = (nextState, previousState, storageType) =
   return args;
 };
 
-const hasDocumentChangesForStorageType = (
+const changePriorityForDocumentsOfType = (
   nextState: State,
   previousState: State,
 ) => (storageType: StorageType) => {
   const args = addedRemovedChangedArgsForType(nextState, previousState, storageType);
 
-  return !noChangeInDocuments(...args);
+  if (!isEmpty(addedDocuments(...args))) return UPDATE_PRIORITY_IMMEDIATE;
+  if (!isEmpty(removedDocuments(...args))) return UPDATE_PRIORITY_IMMEDIATE;
+  if (!isEmpty(changedDocuments(...args))) return UPDATE_PRIORITY_LAZY;
+  return UPDATE_PRIORITY_NO_CHANGES;
 };
 
 const getChangedDocumentsForStorageType = (
@@ -188,13 +189,23 @@ export default (storage = getPromiseStorage(), storageImplementations = [
   };
 
   const doLoadDocument = async (documentId) => {
-    const currentState = getState();
-    const storageLocation = get(['documentStorageLocations', documentId], currentState);
-    const account = getAccount(currentState, storageLocation.accountId);
+    const getAccountStorageLocation = (state) => {
+      const storageLocation = get(['documentStorageLocations', documentId], state);
+      const account = getAccount(state, storageLocation.accountId);
+      return { account, storageLocation };
+    };
 
-    const document = await queueImplementationStorageOperation(account.type, storage => (
-      storage.loadDocument(account, storageLocation)
-    ));
+    const { id: previousAccountId, type } = getAccountStorageLocation(getState()).account;
+
+    const document = await queueImplementationStorageOperation(type, storage => {
+      const { account, storageLocation } = getAccountStorageLocation(getState());
+
+      if (account.id !== previousAccountId) {
+        throw new Error('Document moved when attempting to load');
+      }
+
+      return storage.loadDocument(account, storageLocation);
+    });
 
     // document is sent without ids, and when we dispatch setDocument, they are set
     dispatch(setDocument(documentId, document));
@@ -285,6 +296,10 @@ export default (storage = getPromiseStorage(), storageImplementations = [
     }
   };
 
+  const ensureLastStateForStorageType = previousState => (storageType) => {
+    if (!lastStatePerStorageType[storageType]) lastStatePerStorageType[storageType] = previousState;
+  };
+
   const storageImplementationQueueMap = mapValues(storageImplementation => (
     debounce(() => {
       queueImplementationStorageOperation(
@@ -294,12 +309,14 @@ export default (storage = getPromiseStorage(), storageImplementations = [
     }, storageImplementation.delay, { maxWait: storageImplementation.maxWait })
   ), storages);
 
-  const queueUpdateStorageImplementation = previousState => storageType => {
-    if (!lastStatePerStorageType[storageType]) lastStatePerStorageType[storageType] = previousState;
-
+  const queueUpdateStorageImplementation = (storageType) => {
     // Can we set a list of all storageTypes that will be updated so that between now and until the
     // debounce callback is called, we don't bother checking for the document changes for this type
     storageImplementationQueueMap[storageType]();
+  };
+
+  const updateStorageImplementationImmediately = (storageType) => {
+    queueImplementationStorageOperation(storageType, doUpdateStorageImplementation);
   };
 
   return next => (action) => {
@@ -313,11 +330,18 @@ export default (storage = getPromiseStorage(), storageImplementations = [
 
     if (accountsNeedsUpdating(nextState, previousState)) doSaveAccounts();
 
-    const storageTypesWithChanges = filter(
-      hasDocumentChangesForStorageType(nextState, previousState),
-      storageTypes
+    const storageTypesByUpdatePriority = flow(
+      groupBy(changePriorityForDocumentsOfType(nextState, previousState)),
+      omit([UPDATE_PRIORITY_NO_CHANGES])
+    )(storageTypes);
+    const allChanges = flatten(values(storageTypesByUpdatePriority));
+
+    forEach(ensureLastStateForStorageType(previousState), allChanges);
+    forEach(
+      updateStorageImplementationImmediately,
+      storageTypesByUpdatePriority[UPDATE_PRIORITY_IMMEDIATE]
     );
-    forEach(queueUpdateStorageImplementation(previousState), storageTypesWithChanges);
+    forEach(queueUpdateStorageImplementation, storageTypesByUpdatePriority[UPDATE_PRIORITY_LAZY]);
 
     return returnValue;
   };
