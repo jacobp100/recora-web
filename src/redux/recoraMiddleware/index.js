@@ -2,6 +2,7 @@
 import { concat, forEach, isEqual, keys, difference, intersection, reject } from 'lodash/fp';
 import getDefaultBatchImpl from './batchImplementation';
 import { setSectionResult } from '../index';
+import type { BatchImplementation } from './types';
 import type { State, SectionId } from '../../types';
 
 
@@ -27,7 +28,7 @@ const getAddedChangedRemovedSectionItems = (nextItems: Items, previousItems: Ite
 };
 
 const middleware = (
-  batchImplementation = getDefaultBatchImpl()
+  batchImplementation: BatchImplementation = getDefaultBatchImpl()
 ): any => ({ getState, dispatch }) => {
   batchImplementation.addResultListener((sectionId, entries, total) => {
     dispatch(setSectionResult(sectionId, entries, total));

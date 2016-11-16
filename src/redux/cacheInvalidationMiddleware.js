@@ -9,7 +9,7 @@ const cacheKeys = [
   'customUnits',
 ];
 
-export default () => ({ getState, dispatch }) => {
+export default (): any => ({ getState, dispatch }) => {
   let activeDocument: ?DocumentId = null;
 
   const getInactiveDocuments = (state) =>
@@ -30,5 +30,5 @@ export default () => ({ getState, dispatch }) => {
   };
 };
 
-export const setActiveDocument = (documentId) =>
+export const setActiveDocument = (documentId: DocumentId) =>
   ({ type: SET_ACTIVE_DOCUMENT, documentId });

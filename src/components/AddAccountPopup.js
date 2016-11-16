@@ -22,7 +22,7 @@ const paramString = flow(
 
 const getOAuthUrl = ({ url, ...params }) => `${url}?${paramString(params)}`;
 
-const AddAccountPopup = ({ onClose }) => (
+const AddAccountPopup = ({ onClose }: Object) => (
   <div className={container}>
     <div className={popup}>
       <h1 className={title}>Add Account</h1>

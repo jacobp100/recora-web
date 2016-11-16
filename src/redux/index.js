@@ -7,8 +7,8 @@ import quickCalculationExamples from './quickCalculationExamples.json';
 import { append, reorder, getOrThrow } from '../util';
 import { STORAGE_LOCAL } from '../types';
 import type { // eslint-disable-line
-  StorageLocation, Document, State, SectionId, DocumentId, RecoraResult, StorageAccount,
-  StorageAccountId,
+  StorageLocation, Document, State, SectionId, DocumentId, RecoraResult, StorageType,
+  StorageAccount, StorageAccountId,
 } from '../types';
 
 
@@ -225,7 +225,7 @@ export default (state: State = defaultState, action: Object): State => {
       )(state);
     }
     case UNLOAD_DOCUMENTS: {
-      const { documentIds } = state;
+      const { documentIds } = action;
       const sectionsIds = flatMap(documentId => (
         getOr([], ['documentSections', documentId], state)
       ), documentIds);
@@ -284,7 +284,12 @@ export default (state: State = defaultState, action: Object): State => {
 };
 
 /* eslint-disable max-len */
-export const addAccount = (accountType, accountId, accountToken, accountName) =>
+export const addAccount = (
+  accountType: StorageType,
+  accountId: StorageAccountId,
+  accountToken: ?string,
+  accountName: string
+) =>
   ({ type: ADD_ACCOUNT, accountType, accountId, accountToken, accountName });
 export const setAccounts = (accounts: StorageAccount) =>
   ({ type: SET_ACCOUNTS, accounts });
@@ -292,7 +297,7 @@ export const setDocuments = (documents: StorageLocation[]) =>
   ({ type: SET_DOCUMENTS, documents });
 export const setDocument = (documentId: DocumentId, document: Document) =>
   ({ type: SET_DOCUMENT, documentId, document });
-export const unloadDocuments = (documentIds: DocumentId) =>
+export const unloadDocuments = (documentIds: DocumentId[]) =>
   ({ type: UNLOAD_DOCUMENTS, documentIds });
 export const updateDocumentStorageLocations = (documentStorageLocations: Object) =>
   ({ type: UPDATE_DOCUMENT_STORAGE_LOCATIONS, documentStorageLocations });

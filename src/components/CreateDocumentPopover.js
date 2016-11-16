@@ -25,6 +25,8 @@ class CreateDocumentPopover extends Component {
   }
 
   onSubmit = () => {
+    if (!this.filenameInput || !this.accountInput) throw new Error('Component not mounted');
+
     const filename = this.filenameInput.value;
     const accountId = this.accountInput.value;
 

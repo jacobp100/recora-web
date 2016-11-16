@@ -1,9 +1,9 @@
 // @flow
 import { curry, concat, get, has, map, propertyOf, intersection } from 'lodash/fp';
 
-export const getOrThrow = (path, source) => {
+export const getOrThrow = (path: string | string[], source: Object) => {
   if (!has(path, source)) {
-    const message = `Expected ${path} to exist in ${JSON.stringify(source)}`;
+    const message = `Expected ${path.toString()} to exist in ${JSON.stringify(source)}`;
     console.error(message); // eslint-disable-line
     throw new Error(message);
   }

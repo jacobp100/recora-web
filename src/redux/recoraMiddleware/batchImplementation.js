@@ -43,6 +43,9 @@ const typesToSkipInTotal = [
 export default ({
   requestIdleCallback = global.requestAnimationFrame,
   frameBudget = 8,
+}: {
+  requestIdleCallback: () => number,
+  frameBudget: number,
 } = {}): BatchImplementation => {
   const runFiber: FiberRunner<CalculationState> = createFiberRunner({
     requestIdleCallback,
@@ -130,7 +133,7 @@ export default ({
     const removedAssignments = getAssignments(previousResults);
 
     if (!isEmpty(newChangedAssignments) || !isEmpty(removedAssignments)) {
-      const nextConstants = getNextConstants(newChangedAssignments, removedAssignments, constants);
+      const nextConstants = getNextConstants(constants, newChangedAssignments, removedAssignments);
       next(getStateForRecalculation(getCurrentState(), nextConstants));
       return;
     }

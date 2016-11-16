@@ -26,14 +26,15 @@ const CREATE_DOCUMENT_POPOVER = 'create-document';
 const ADD_ACCOUNT_POPUP = 'add-account';
 
 class DocumentList extends Component {
-  constructor() {
-    super();
-    this.state = {
-      documentLoadingState: LOADED_DOCUMENT_LIST,
-      popup: null,
-      popover: null,
-    };
-  }
+  state: {
+    documentLoadingState: number,
+    popup: ?string,
+    popover: ?Object,
+  } = {
+    documentLoadingState: LOADED_DOCUMENT_LIST,
+    popup: null,
+    popover: null,
+  };
 
   componentWillMount() {
     if (isEmpty(this.props.documents)) {

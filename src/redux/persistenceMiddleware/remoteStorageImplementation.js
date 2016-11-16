@@ -2,7 +2,9 @@
 import { map, reduce, startsWith, update, trim, isEmpty, curry } from 'lodash/fp';
 import { append } from '../../util';
 import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE } from '../../types';
-import type { Document, Section, StorageInterface, RemoteStorageLocation } from '../../types'; // eslint-disable-line
+import type { // eslint-disable-line
+  Document, Section, StorageInterface, StorageLocation, StorageType,
+} from '../../types';
 
 
 const sectionToString = (section: Section) => {
@@ -43,13 +45,25 @@ const setAccountProperties = curry((account, storageLocation) => ({
   accountId: account.id,
 }));
 
-export default (type, remote): StorageInterface => {
-  const loadDocuments = async (account): RemoteStorageLocation[] => {
+type RemoteStorageInterface = {
+  list: (token: string) => Promise<StorageLocation[]>,
+  get: (token: string, location: any) => Promise<string>,
+  post: (token: string, location: any, body: string, doc: Document) => Promise<Object>,
+  delete: (token: string, location: any) => Promise<>,
+};
+
+export default (
+  type: StorageType,
+  remote: RemoteStorageInterface
+): StorageInterface => {
+  const loadDocuments = async (account): Promise<StorageLocation[]> => {
+    if (!account.token) throw new Error('You must provide an account token');
     const storageLocations = await remote.list(account.token);
     return map(setAccountProperties(account), storageLocations);
   };
 
-  const loadDocument = async (account, storageLocation: RemoteStorageLocation): Document => {
+  const loadDocument = async (account, storageLocation: StorageLocation): Promise<Document> => {
+    if (!account.token) throw new Error('You must provide an account token');
     const contents = await remote.get(account.token, storageLocation);
     const document: Document = parseDocumentString(storageLocation.title, contents);
     return document;

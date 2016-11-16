@@ -3,6 +3,7 @@ import {
   __, map, concat, isEqual, flow, matchesProperty, filter, assign, omit, get, keyBy, mapValues,
   some, reduce,
 } from 'lodash/fp';
+import type { RecoraResult } from '../../types';
 
 const NODE_ASSIGNMENT = 'NODE_ASSIGNMENT';
 const resultIsAssignment = matchesProperty(['result', 'value', 'type'], NODE_ASSIGNMENT);
@@ -40,12 +41,19 @@ export const removeDuplicateAssignments = reduce((outputResults, result) => {
   return concat(outputResults, outputResult);
 }, []);
 
-export const getNewChangedAssignments = (constants, results) => flow(
+export const getNewChangedAssignments = (
+  constants: Object,
+  results: RecoraResult[]
+): RecoraResult[] => flow(
   getAssignments,
   filter(({ identifier, value }) => !isEqual(constants[identifier], value))
 )(results);
 
-export const getNextConstants = (newChangedAssignments, removedAssignments, constants) => {
+export const getNextConstants = (
+  constants: Object,
+  newChangedAssignments: RecoraResult[],
+  removedAssignments: RecoraResult[]
+): Object => {
   const newConstants = flow(keyBy('identifier'), mapValues('value'))(newChangedAssignments);
   const removedConstantNames = map('identifier', removedAssignments);
 

@@ -20,7 +20,10 @@ export default class DocumentView extends Component {
     }).isRequired,
   }
 
-  state = {
+  state: {
+    popup: ?string,
+    popover: ?Object,
+  } = {
     popup: null,
     popover: null,
   }

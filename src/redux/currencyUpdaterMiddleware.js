@@ -13,7 +13,7 @@ const fetchCurrencies = async () => {
   return mapValues(value => [multiplier / value, { currency: 1 }], body.rates);
 };
 
-export default (AppState) => ({ dispatch }) => {
+export default (AppState: any): any => ({ dispatch }) => {
   let lastCurrencyUpdate = -Infinity;
   const currencyUpdateThreshold = 60 * 60 * 1000;
 

@@ -3,12 +3,14 @@ import Recora from 'recora';
 import { setQuickCalculationResult } from './index';
 
 
-export default () => ({ getState, dispatch }) => {
+const matches = (regExp: RegExp, string: string) => string.match(regExp) || [];
+
+export default (): any => ({ getState, dispatch }) => {
   const now = new Date();
   const nowString = String(now);
-  let timezone = nowString.indexOf('(') > -1
-    ? nowString.match(/\([^\)]+\)/)[0].match(/[A-Z]/g).join('')
-    : nowString.match(/[A-Z]{3,4}/)[0];
+  let timezone: string = nowString.indexOf('(') > -1
+    ? matches(/[A-Z]/g, matches(/\([^\)]+\)/, nowString)[0]).join('')
+    : matches(/[A-Z]{3,4}/, nowString)[0];
   if (/[^a-z]/i.test(timezone)) timezone = 'UTC';
 
   const dateObject = {

@@ -14,8 +14,9 @@ import {
 import { getPromiseStorage } from './promiseStorage';
 import asyncStorageImplementation from './asyncStorageImplementation';
 import dropboxStorageImplementation from './dropboxStorageImplementation';
+import type { PromiseStorage } from './promiseStorage'; // eslint-disable-line
 import type { // eslint-disable-line
-  State, DocumentId, StorageType, StorageAction, StorageOperation,
+  State, DocumentId, StorageType, StorageAction, StorageOperation, StorageInterface,
 } from '../../types';
 
 /*
@@ -153,10 +154,13 @@ const getChangedDocumentsForStorageType = (
   };
 };
 
-export default (storage = getPromiseStorage(), storageImplementations = [
-  asyncStorageImplementation(storage),
-  dropboxStorageImplementation(),
-]): any => ({ getState, dispatch }) => {
+export default (
+  storage: PromiseStorage = getPromiseStorage(),
+  storageImplementations: StorageInterface[] = [
+    asyncStorageImplementation(storage),
+    dropboxStorageImplementation(),
+  ]
+): any => ({ getState, dispatch }) => {
   const storages = keyBy('type', storageImplementations);
   const storageTypes = keys(storages);
 
@@ -168,7 +172,10 @@ export default (storage = getPromiseStorage(), storageImplementations = [
   const lastStatePerStorageType = {};
 
   const promisesPerStorageType = {};
-  const queueImplementationStorageOperation = (storageType, callback) => {
+  const queueImplementationStorageOperation = (
+    storageType,
+    callback: (storgae: StorageInterface) => Promise<any>
+  ) => {
     const existingPromise = promisesPerStorageType[storageType] || Promise.resolve();
     const returnValue = existingPromise.then(() => callback(storages[storageType]));
     promisesPerStorageType[storageType] = returnValue.catch(() => {});
@@ -197,14 +204,14 @@ export default (storage = getPromiseStorage(), storageImplementations = [
 
     const { id: previousAccountId, type } = getAccountStorageLocation(getState()).account;
 
-    const document = await queueImplementationStorageOperation(type, storage => {
+    const document = await queueImplementationStorageOperation(type, async (storage) => {
       const { account, storageLocation } = getAccountStorageLocation(getState());
 
       if (account.id !== previousAccountId) {
         throw new Error('Document moved when attempting to load');
       }
 
-      return storage.loadDocument(account, storageLocation);
+      return await storage.loadDocument(account, storageLocation);
     });
 
     // document is sent without ids, and when we dispatch setDocument, they are set

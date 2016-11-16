@@ -6,15 +6,15 @@ import {
 import uuid from 'uuid';
 import { STORAGE_ACTION_SAVE, STORAGE_ACTION_REMOVE, STORAGE_LOCAL } from '../../types';
 import type { // eslint-disable-line
-  StorageOperation, PromiseStorage, Document, StorageInterface, LocalStorageLocation,
-  StorageAccount,
+  StorageOperation, Document, StorageInterface, LocalStorageLocation, StorageAccount,
 } from '../../types';
+import type { PromiseStorage } from './promiseStorage';
 
 
 const generateStorageKey = () => uuid.v4();
 
 export default (storage: PromiseStorage): StorageInterface => {
-  const loadDocuments = async (account: StorageAccount): LocalStorageLocation[] => {
+  const loadDocuments = async (account: StorageAccount): Promise<LocalStorageLocation[]> => {
     const item = await storage.getItem(account.id);
     if (!item) return [];
     const items = JSON.parse(item);
@@ -24,7 +24,7 @@ export default (storage: PromiseStorage): StorageInterface => {
   const loadDocument = async (
     account: StorageAccount,
     storageLocation: LocalStorageLocation
-  ): Document => {
+  ): Promise<Document> => {
     const sectionPairs = await storage.multiGet(storageLocation.sectionStorageKeys);
     const sections = map(pair => JSON.parse(pair[1]), sectionPairs);
     const document = {
